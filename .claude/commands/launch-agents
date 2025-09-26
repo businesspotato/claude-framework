@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# Claude Custom Command: Launch Multi-Agent Session
+# Goal: Quick command to start multi-agent parallel development
+# Usage: /launch-agents
+
+set -e
+
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+
+echo "🚀 Launching Multi-Agent Development Session..."
+echo ""
+
+# Check if we're in the right directory
+if [ ! -f "$PROJECT_ROOT/CLAUDE.md" ]; then
+    echo "❌ Not in project root directory"
+    echo "   Please run from One Piece TCG Manager project root"
+    exit 1
+fi
+
+# Change to project directory
+cd "$PROJECT_ROOT"
+
+# Run the full startup sequence
+./scripts/start-multi-agent-session.sh
+
+echo ""
+echo "✅ Multi-agent session launched!"
+echo "💡 All agent terminals should now be open and ready for development"

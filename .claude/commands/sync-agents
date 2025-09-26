@@ -1,0 +1,144 @@
+#!/bin/bash
+
+# Claude Custom Command: Sync All Agents
+# Goal: Synchronize all agent branches with latest changes
+# Usage: /sync-agents
+
+set -e
+
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+STATUS_FILE="$PROJECT_ROOT/status/status.json"
+TREES_DIR="$PROJECT_ROOT/.trees"
+
+echo "🔄 Synchronizing All Agent Branches"
+echo ""
+
+# Check if status file exists
+if [ ! -f "$STATUS_FILE" ]; then
+    echo "❌ No active multi-agent session found"
+    echo "   Run: /launch-agents first"
+    exit 1
+fi
+
+# Get current branch
+CURRENT_BRANCH=$(git branch --show-current)
+echo "📍 Base branch: $CURRENT_BRANCH"
+
+# Function to sync an agent
+sync_agent() {
+    local agent="$1"
+    local branch="$2"
+    local worktree="$3"
+
+    echo "🔄 Syncing: $agent"
+    echo "   Branch: $branch"
+    echo "   Worktree: $worktree"
+
+    # Switch to agent worktree
+    if [ -d "$worktree" ]; then
+        cd "$worktree"
+
+        # Check if there are uncommitted changes
+        if ! git diff --quiet || ! git diff --staged --quiet; then
+            echo "   💾 Stashing uncommitted changes..."
+            git stash push -m "Auto-stash before sync $(date)"
+        fi
+
+        # Fetch latest changes
+        git fetch origin
+
+        # Merge changes from base branch
+        if git merge "origin/$CURRENT_BRANCH" --no-edit; then
+            echo "   ✅ Sync successful"
+        else
+            echo "   ❌ Merge conflicts detected"
+            echo "      Manual resolution required in: $worktree"
+            return 1
+        fi
+
+        # Return to project root
+        cd "$PROJECT_ROOT"
+    else
+        echo "   ❌ Worktree not found: $worktree"
+        return 1
+    fi
+
+    return 0
+}
+
+# Get agents to sync
+echo "1️⃣  Identifying agents to sync..."
+
+AGENTS=$(jq -r '.agents | keys[]' "$STATUS_FILE")
+SYNC_SUCCESS=()
+SYNC_FAILED=()
+
+echo "   Agents found: $(echo $AGENTS | wc -w | tr -d ' ')"
+echo ""
+
+echo "2️⃣  Syncing agent branches..."
+
+for agent in $AGENTS; do
+    branch=$(jq -r ".agents[\"$agent\"].branch" "$STATUS_FILE")
+    worktree=$(jq -r ".agents[\"$agent\"].workTree" "$STATUS_FILE")
+    worktree_path="$PROJECT_ROOT/$worktree"
+
+    if sync_agent "$agent" "$branch" "$worktree_path"; then
+        SYNC_SUCCESS+=("$agent")
+    else
+        SYNC_FAILED+=("$agent")
+    fi
+    echo ""
+done
+
+echo "3️⃣  Updating agent status..."
+
+# Update last sync time for successful syncs
+TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%S.%3NZ")
+
+for agent in "${SYNC_SUCCESS[@]}"; do
+    TEMP_STATUS=$(mktemp)
+    jq --arg agent "$agent" \
+       --arg timestamp "$TIMESTAMP" \
+       ".agents[\$agent].lastUpdate = \$timestamp |
+        .session.lastUpdate = \$timestamp" \
+       "$STATUS_FILE" > "$TEMP_STATUS" && mv "$TEMP_STATUS" "$STATUS_FILE"
+done
+
+echo ""
+echo "📊 Sync Results:"
+
+if [ ${#SYNC_SUCCESS[@]} -gt 0 ]; then
+    echo "   ✅ Successfully synced (${#SYNC_SUCCESS[@]}):"
+    for agent in "${SYNC_SUCCESS[@]}"; do
+        echo "      • $agent"
+    done
+fi
+
+if [ ${#SYNC_FAILED[@]} -gt 0 ]; then
+    echo "   ❌ Failed to sync (${#SYNC_FAILED[@]}):"
+    for agent in "${SYNC_FAILED[@]}"; do
+        echo "      • $agent"
+    done
+    echo ""
+    echo "   🔧 Next steps for failed syncs:"
+    echo "      1. Navigate to failed agent worktrees"
+    echo "      2. Resolve merge conflicts manually"
+    echo "      3. Complete merge: git merge --continue"
+    echo "      4. Re-run sync: /sync-agents"
+fi
+
+echo ""
+echo "💡 Post-sync recommendations:"
+echo "   • Test agent integrations: npm test"
+echo "   • Check for conflicts: /agent-status"
+echo "   • Verify application startup: npm start"
+echo "   • Update documentation if needed"
+
+if [ ${#SYNC_FAILED[@]} -eq 0 ]; then
+    echo ""
+    echo "✅ All agents synchronized successfully!"
+else
+    echo ""
+    echo "⚠️  Some agents require manual attention"
+fi

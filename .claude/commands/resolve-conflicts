@@ -1,0 +1,253 @@
+#!/bin/bash
+
+# Claude Custom Command: Resolve Agent Conflicts
+# Goal: Detect and help resolve conflicts between agents
+# Usage: /resolve-conflicts
+
+set -e
+
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+STATUS_FILE="$PROJECT_ROOT/status/status.json"
+
+echo "🔧 Multi-Agent Conflict Resolution"
+echo ""
+
+# Check if status file exists
+if [ ! -f "$STATUS_FILE" ]; then
+    echo "❌ No active multi-agent session found"
+    echo "   Run: /launch-agents first"
+    exit 1
+fi
+
+# Function to detect file conflicts
+detect_file_conflicts() {
+    echo "1️⃣  Detecting file ownership conflicts..."
+
+    local conflicts_found=false
+    local temp_conflicts=$(mktemp)
+
+    # Create associative array to track file ownership
+    declare -A file_owners
+
+    # Check each agent's modified files against other agents' territories
+    AGENTS=$(jq -r '.agents | keys[]' "$STATUS_FILE")
+
+    for agent in $AGENTS; do
+        # Get modified files for this agent
+        modified_files=$(jq -r ".agents[\"$agent\"].filesModified[]?" "$STATUS_FILE" 2>/dev/null)
+
+        for file in $modified_files; do
+            # Check if this file is in another agent's territory
+            for other_agent in $AGENTS; do
+                if [ "$agent" != "$other_agent" ]; then
+                    # Check if file matches any pattern in other agent's territory
+                    territories=$(jq -r ".agents[\"$other_agent\"].filesOwned[]" "$STATUS_FILE")
+                    for territory in $territories; do
+                        # Convert glob pattern to regex for matching
+                        territory_regex=$(echo "$territory" | sed 's/\*\*/.*/' | sed 's/\*/[^\/]*/')
+                        if [[ "$file" =~ $territory_regex ]]; then
+                            echo "   ⚠️  Conflict detected:"
+                            echo "      File: $file"
+                            echo "      Modified by: $agent"
+                            echo "      Territory owner: $other_agent"
+                            echo ""
+                            conflicts_found=true
+
+                            # Record conflict
+                            echo "{\"file\": \"$file\", \"modifier\": \"$agent\", \"owner\": \"$other_agent\"}" >> "$temp_conflicts"
+                        fi
+                    done
+                fi
+            done
+        done
+    done
+
+    if [ "$conflicts_found" = false ]; then
+        echo "   ✅ No file ownership conflicts detected"
+    fi
+
+    return 0
+}
+
+# Function to check for merge conflicts in worktrees
+check_merge_conflicts() {
+    echo "2️⃣  Checking for merge conflicts in worktrees..."
+
+    local merge_conflicts_found=false
+    TREES_DIR="$PROJECT_ROOT/.trees"
+
+    AGENTS=$(jq -r '.agents | keys[]' "$STATUS_FILE")
+
+    for agent in $AGENTS; do
+        worktree=$(jq -r ".agents[\"$agent\"].workTree" "$STATUS_FILE")
+        worktree_path="$PROJECT_ROOT/$worktree"
+
+        if [ -d "$worktree_path" ]; then
+            cd "$worktree_path"
+
+            # Check for merge conflicts
+            if git status --porcelain | grep -q "^UU\|^AA\|^DD"; then
+                echo "   ❌ Merge conflicts in: $agent"
+                echo "      Worktree: $worktree_path"
+                echo "      Conflicted files:"
+                git status --porcelain | grep "^UU\|^AA\|^DD" | sed 's/^/         /'
+                echo ""
+                merge_conflicts_found=true
+            fi
+
+            cd "$PROJECT_ROOT"
+        fi
+    done
+
+    if [ "$merge_conflicts_found" = false ]; then
+        echo "   ✅ No merge conflicts detected"
+    fi
+
+    return 0
+}
+
+# Function to suggest conflict resolution
+suggest_resolution() {
+    echo "3️⃣  Conflict resolution suggestions..."
+
+    # Check current conflicts in status
+    CURRENT_CONFLICTS=$(jq -r '.conflicts | length' "$STATUS_FILE")
+
+    if [ "$CURRENT_CONFLICTS" -gt 0 ]; then
+        echo "   📋 Recorded conflicts:"
+        jq -r '.conflicts[] | "      • \(.file): \(.agents | join(" vs "))"' "$STATUS_FILE"
+        echo ""
+    fi
+
+    echo "   🔧 Resolution strategies:"
+    echo ""
+
+    echo "   📁 File Ownership Conflicts:"
+    echo "      1. Coordinate through status updates"
+    echo "      2. Merge changes manually"
+    echo "      3. Split work across different files"
+    echo "      4. Create shared interfaces for integration"
+    echo ""
+
+    echo "   🔀 Merge Conflicts:"
+    echo "      1. Navigate to conflicted worktree"
+    echo "      2. Edit conflicted files manually"
+    echo "      3. Remove conflict markers (<<<<<<< ======= >>>>>>>)"
+    echo "      4. Test the merged result"
+    echo "      5. Complete merge: git add . && git commit"
+    echo ""
+
+    echo "   🤝 Coordination Conflicts:"
+    echo "      1. Update agent status with current task"
+    echo "      2. Communicate through status.json comments"
+    echo "      3. Sequence dependent work appropriately"
+    echo "      4. Use integration points for handoffs"
+    echo ""
+}
+
+# Function to update conflict status
+update_conflict_status() {
+    echo "4️⃣  Updating conflict status..."
+
+    # For now, we'll clear conflicts if none are detected
+    # In a more sophisticated implementation, this would track specific conflicts
+
+    TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%S.%3NZ")
+
+    TEMP_STATUS=$(mktemp)
+    jq --arg timestamp "$TIMESTAMP" \
+       '.conflicts = [] |
+        .session.lastUpdate = $timestamp' \
+       "$STATUS_FILE" > "$TEMP_STATUS" && mv "$TEMP_STATUS" "$STATUS_FILE"
+
+    echo "   ✅ Conflict status updated"
+}
+
+# Function to provide interactive resolution
+interactive_resolution() {
+    echo "5️⃣  Interactive conflict resolution..."
+    echo ""
+
+    echo "🤔 What type of conflict are you experiencing?"
+    echo "   1) File ownership conflict (agent working outside territory)"
+    echo "   2) Merge conflict (git merge issues)"
+    echo "   3) Coordination conflict (dependent work sequencing)"
+    echo "   4) Integration conflict (cross-agent handoffs)"
+    echo "   5) Show conflict resolution help"
+    echo "   6) Exit"
+    echo ""
+
+    read -p "Select option [1-6]: " -n 1 -r
+    echo
+    echo ""
+
+    case $REPLY in
+        1)
+            echo "📁 File Ownership Conflict Resolution:"
+            echo "   • Review agent territories: /agent-territories"
+            echo "   • Check current agent status: /agent-status"
+            echo "   • Coordinate file modifications through status updates"
+            echo "   • Consider splitting work across appropriate territories"
+            ;;
+        2)
+            echo "🔀 Merge Conflict Resolution:"
+            echo "   • Navigate to affected worktree: cd .trees/[agent-name]"
+            echo "   • View conflicts: git status"
+            echo "   • Edit conflicted files manually"
+            echo "   • Complete merge: git add . && git commit"
+            echo "   • Test integration: npm test"
+            ;;
+        3)
+            echo "🤝 Coordination Conflict Resolution:"
+            echo "   • Update agent status with dependencies"
+            echo "   • Sequence work according to dependency graph"
+            echo "   • Use integration points for handoffs"
+            echo "   • Communicate through status.json updates"
+            ;;
+        4)
+            echo "🔗 Integration Conflict Resolution:"
+            echo "   • Review integration points: jq .integrationPoints status/status.json"
+            echo "   • Test cross-agent interfaces"
+            echo "   • Update integration point status"
+            echo "   • Run integration tests: npm run test:integration"
+            ;;
+        5)
+            echo "📖 Conflict Resolution Help:"
+            echo "   • Documentation: docs/multi-agent-workflow.md"
+            echo "   • Agent coordination: CLAUDE.md"
+            echo "   • Territory assignments: /agent-territories"
+            echo "   • Status monitoring: /agent-status"
+            ;;
+        6)
+            echo "👋 Exiting conflict resolution"
+            return 0
+            ;;
+        *)
+            echo "❌ Invalid option"
+            ;;
+    esac
+}
+
+# Main execution
+detect_file_conflicts
+echo ""
+
+check_merge_conflicts
+echo ""
+
+suggest_resolution
+echo ""
+
+update_conflict_status
+echo ""
+
+interactive_resolution
+
+echo ""
+echo "✅ Conflict resolution process complete"
+echo ""
+echo "💡 Next steps:"
+echo "   • Monitor status: /agent-status"
+echo "   • Test integration: npm test"
+echo "   • Sync agents: /sync-agents"
+echo "   • Final integration: ./scripts/integrate-all-agents.sh"

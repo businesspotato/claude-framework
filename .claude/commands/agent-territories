@@ -1,0 +1,76 @@
+#!/bin/bash
+
+# Claude Custom Command: Display Agent Territories
+# Goal: Show file territory assignments for each agent
+# Usage: /agent-territories
+
+set -e
+
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+STATUS_FILE="$PROJECT_ROOT/status/status.json"
+
+echo "🗺️  Multi-Agent Territory Assignments"
+echo ""
+
+# Check if status file exists
+if [ ! -f "$STATUS_FILE" ]; then
+    echo "❌ No active multi-agent session found"
+    echo "   Run: /launch-agents or ./scripts/init-multi-agent-session.sh"
+    exit 1
+fi
+
+# Display territories for each agent
+echo "📁 Agent File Territories:"
+echo ""
+
+# Get list of agents
+AGENTS=$(jq -r '.agents | keys[]' "$STATUS_FILE")
+
+for agent in $AGENTS; do
+    echo "🤖 $agent:"
+    echo "   Status: $(jq -r ".agents[\"$agent\"].status" "$STATUS_FILE")"
+    echo "   Branch: $(jq -r ".agents[\"$agent\"].branch" "$STATUS_FILE")"
+    echo "   Worktree: $(jq -r ".agents[\"$agent\"].workTree" "$STATUS_FILE")"
+    echo ""
+    echo "   📂 Owned Files/Directories:"
+    jq -r ".agents[\"$agent\"].filesOwned[]" "$STATUS_FILE" | sed 's/^/      • /'
+    echo ""
+
+    # Show dependencies if any
+    DEPS=$(jq -r ".agents[\"$agent\"].dependencies[]" "$STATUS_FILE" 2>/dev/null)
+    if [ -n "$DEPS" ]; then
+        echo "   🔗 Dependencies:"
+        echo "$DEPS" | sed 's/^/      • /'
+        echo ""
+    fi
+
+    # Show recent modifications if any
+    MOD_COUNT=$(jq -r ".agents[\"$agent\"].filesModified | length" "$STATUS_FILE")
+    if [ "$MOD_COUNT" -gt 0 ]; then
+        echo "   📝 Recent Modifications ($MOD_COUNT files):"
+        jq -r ".agents[\"$agent\"].filesModified[]" "$STATUS_FILE" | sed 's/^/      • /'
+        echo ""
+    fi
+
+    echo "   ────────────────────────────────────────"
+    echo ""
+done
+
+# Display shared files
+echo "🔄 Shared Files (All Agents):"
+jq -r '.sharedFiles[]' "$STATUS_FILE" | sed 's/^/   • /'
+echo ""
+
+# Display territory rules
+echo "📋 Territory Rules:"
+echo "   • Agents should only modify files in their assigned territories"
+echo "   • Shared files require coordination through status.json"
+echo "   • Update status when modifying files outside your territory"
+echo "   • Test integration points when changes affect dependencies"
+echo ""
+
+echo "💡 Conflict Prevention:"
+echo "   • Check agent status before modifying shared files"
+echo "   • Communicate through status updates"
+echo "   • Resolve conflicts through ./scripts/resolve-conflicts.sh"
+echo "   • Use worktree isolation for parallel development"

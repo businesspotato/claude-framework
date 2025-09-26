@@ -1,0 +1,141 @@
+#!/bin/bash
+
+# Cache-First Enforcer Hook for Claude Code
+# Automatically injects cache-first context to minimize API token usage
+# Part of the token optimization system to reduce API costs by 70%
+
+PROMPT="$1"
+PROMPT_LOWER=$(echo "$PROMPT" | tr '[:upper:]' '[:lower:]')
+
+# Check if the prompt is related to data queries that should use cache
+SHOULD_OPTIMIZE=false
+
+# Keywords that indicate data fetching operations
+if [[ "$PROMPT_LOWER" == *"price"* ]] || \
+   [[ "$PROMPT_LOWER" == *"card"* ]] || \
+   [[ "$PROMPT_LOWER" == *"fetch"* ]] || \
+   [[ "$PROMPT_LOWER" == *"get"* ]] || \
+   [[ "$PROMPT_LOWER" == *"retrieve"* ]] || \
+   [[ "$PROMPT_LOWER" == *"find"* ]] || \
+   [[ "$PROMPT_LOWER" == *"search"* ]] || \
+   [[ "$PROMPT_LOWER" == *"lookup"* ]] || \
+   [[ "$PROMPT_LOWER" == *"show"* ]] || \
+   [[ "$PROMPT_LOWER" == *"display"* ]] || \
+   [[ "$PROMPT_LOWER" == *"list"* ]] || \
+   [[ "$PROMPT_LOWER" == *"collection"* ]] || \
+   [[ "$PROMPT_LOWER" == *"image"* ]] || \
+   [[ "$PROMPT_LOWER" == *"photo"* ]]; then
+  SHOULD_OPTIMIZE=true
+fi
+
+# Skip optimization if user explicitly wants fresh data
+if [[ "$PROMPT_LOWER" == *"fresh"* ]] || \
+   [[ "$PROMPT_LOWER" == *"latest"* ]] || \
+   [[ "$PROMPT_LOWER" == *"real-time"* ]] || \
+   [[ "$PROMPT_LOWER" == *"current"* ]] || \
+   [[ "$PROMPT_LOWER" == *"no cache"* ]] || \
+   [[ "$PROMPT_LOWER" == *"bypass cache"* ]]; then
+  SHOULD_OPTIMIZE=false
+fi
+
+# Inject optimization context if needed
+if [ "$SHOULD_OPTIMIZE" = true ]; then
+  cat << 'EOF'
+{
+  "context": "TOKEN OPTIMIZATION ACTIVE - Follow this hierarchy to minimize API costs:
+
+    1. CHECK CACHE FIRST (Priority Order):
+       a) Memory MCP Server - Instant, no tokens, check first
+       b) SQLite Database - Query: SELECT * FROM cards WHERE name LIKE '%pattern%' LIMIT 10
+       c) Redis Cache - Check if key exists before external calls
+       d) Cloudinary CDN - For images already uploaded
+
+    2. BATCH OPERATIONS:
+       - Combine multiple similar requests into single batch
+       - Azure OCR: Queue up to 10 cards before processing
+       - eBay API: Batch up to 20 items per request
+       - APITCG: Combine up to 50 image requests
+
+    3. USE FIELD PROJECTIONS:
+       - Only request needed fields from APIs
+       - Use LIMIT clauses in SQL queries
+       - Specify exact image sizes from Cloudinary
+
+    4. CACHE UPDATES:
+       - After any external API call, update all cache layers
+       - Set appropriate TTLs: Memory(5min), Redis(1hr), SQLite(24hr)
+       - Log cache hit/miss to api_metrics table
+
+    5. MONITORING:
+       - Track all API calls in api_metrics table
+       - Monitor token usage and costs
+       - Alert if usage exceeds thresholds",
+
+  "rules": [
+    "Always check cache before external APIs",
+    "Batch similar operations together",
+    "Use SQL LIMIT and field projections",
+    "Prefer cached data unless explicitly asked for fresh",
+    "Log all operations to api_metrics table",
+    "Update cache after external fetches"
+  ],
+
+  "sql_helpers": {
+    "check_card": "SELECT id, name, set_code, rarity, price_usd, cloudinary_url FROM cards WHERE name LIKE ? LIMIT 10",
+    "recent_prices": "SELECT card_id, price_usd, last_updated FROM card_prices WHERE last_updated > datetime('now', '-1 hour')",
+    "cache_stats": "SELECT service, COUNT(*) as calls, AVG(response_time_ms) as avg_time, SUM(CASE WHEN cache_hit THEN 1 ELSE 0 END) * 100.0 / COUNT(*) as hit_rate FROM api_metrics WHERE timestamp > strftime('%s', 'now', '-1 hour') GROUP BY service"
+  },
+
+  "batching_config": {
+    "azure_ocr": {"max_batch": 10, "flush_interval_ms": 2000},
+    "ebay_api": {"max_batch": 20, "flush_interval_ms": 3000},
+    "apitcg": {"max_batch": 50, "flush_interval_ms": 1000}
+  }
+}
+EOF
+
+# Check for potential batch operations
+elif [[ "$PROMPT" == *"multiple"* ]] || \
+     [[ "$PROMPT" == *"several"* ]] || \
+     [[ "$PROMPT" == *"all"* ]] || \
+     [[ "$PROMPT" == *"batch"* ]] || \
+     [[ "$PROMPT" == *"bulk"* ]]; then
+
+  cat << 'EOF'
+{
+  "suggestion": "BATCH OPERATION DETECTED - Combine multiple operations to save tokens",
+  "context": "Use batch processing to minimize API calls:
+    - Collect all items to process
+    - Group by operation type
+    - Execute in single batch request
+    - Update cache with all results",
+  "examples": {
+    "azure_ocr": "Batch up to 10 cards: await azureService.batchProcess(cardImages)",
+    "ebay_prices": "Batch up to 20 items: await ebayService.batchGetPrices(itemIds)",
+    "database": "Use IN clause: SELECT * FROM cards WHERE id IN (?, ?, ?, ...)"
+  }
+}
+EOF
+
+# Provide context for token monitoring queries
+elif [[ "$PROMPT_LOWER" == *"token"* ]] || \
+     [[ "$PROMPT_LOWER" == *"usage"* ]] || \
+     [[ "$PROMPT_LOWER" == *"cost"* ]] || \
+     [[ "$PROMPT_LOWER" == *"metric"* ]]; then
+
+  cat << 'EOF'
+{
+  "context": "TOKEN METRICS AVAILABLE - Query api_metrics table for usage data",
+  "queries": {
+    "recent_usage": "SELECT service, COUNT(*) as calls, SUM(tokens_used) as tokens, ROUND(SUM(estimated_cost), 4) as cost FROM api_metrics WHERE timestamp > strftime('%s', 'now', '-1 hour') GROUP BY service",
+    "cache_performance": "SELECT service, ROUND(100.0 * SUM(CASE WHEN cache_hit THEN 1 ELSE 0 END) / COUNT(*), 2) as hit_rate FROM api_metrics WHERE timestamp > strftime('%s', 'now', '-1 day') GROUP BY service",
+    "daily_trend": "SELECT date(timestamp, 'unixepoch') as day, SUM(tokens_used) as daily_tokens, ROUND(SUM(estimated_cost), 2) as daily_cost FROM api_metrics GROUP BY day ORDER BY day DESC LIMIT 7",
+    "optimization_opportunities": "SELECT service, COUNT(*) as unbatched_calls FROM api_metrics WHERE batch_size = 1 AND timestamp > strftime('%s', 'now', '-1 hour') GROUP BY service HAVING COUNT(*) > 5"
+  },
+  "files": {
+    "metrics_log": ".claude/metrics/token-usage.jsonl",
+    "daily_summaries": ".claude/metrics/daily_summary_*.json"
+  }
+}
+EOF
+fi

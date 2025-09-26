@@ -1,0 +1,262 @@
+#!/bin/bash
+
+# Token Optimization Rollback Command
+# Safely rolls back token optimization features while preserving metrics
+# Usage: /token-rollback [--preserve-metrics]
+
+set -e
+
+# Configuration
+DB_PATH="data/database/cards.db"
+PRESERVE_METRICS="${1:---preserve-metrics}"
+TIMESTAMP=$(date +%s)
+BACKUP_DIR=".claude/backups/rollback_${TIMESTAMP}"
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+echo -e "${YELLOW}===============================================${NC}"
+echo -e "${YELLOW}     Token Optimization Rollback Tool          ${NC}"
+echo -e "${YELLOW}===============================================${NC}"
+echo ""
+echo "Starting rollback process..."
+echo "Backup directory: $BACKUP_DIR"
+echo ""
+
+# Step 1: Create backup directory
+echo -e "${BLUE}Step 1: Creating backup directory${NC}"
+mkdir -p "$BACKUP_DIR"
+echo "   ✓ Backup directory created"
+echo ""
+
+# Step 2: Backup current hooks if they exist
+echo -e "${BLUE}Step 2: Backing up current hooks${NC}"
+if [ -d .claude/hooks ]; then
+  cp -r .claude/hooks "$BACKUP_DIR/"
+  echo "   ✓ Hooks backed up to $BACKUP_DIR/hooks"
+
+  # List backed up hooks
+  if [ -f .claude/hooks/post-tool-use-tokens ]; then
+    echo "      • post-tool-use-tokens"
+  fi
+  if [ -f .claude/hooks/user-prompt-submit-cache ]; then
+    echo "      • user-prompt-submit-cache"
+  fi
+else
+  echo "   - No hooks directory found"
+fi
+echo ""
+
+# Step 3: Backup metrics data
+echo -e "${BLUE}Step 3: Backing up metrics data${NC}"
+if [ -d .claude/metrics ]; then
+  cp -r .claude/metrics "$BACKUP_DIR/"
+  echo "   ✓ Metrics data backed up"
+
+  # Count metrics files
+  METRICS_COUNT=$(find .claude/metrics -type f | wc -l)
+  echo "      • $METRICS_COUNT metric files preserved"
+fi
+
+# Backup database metrics
+if [ "$PRESERVE_METRICS" = "--preserve-metrics" ]; then
+  sqlite3 "$DB_PATH" ".dump api_metrics" > "$BACKUP_DIR/api_metrics_backup.sql"
+  echo "   ✓ Database metrics backed up"
+
+  # Show metrics summary
+  TOTAL_RECORDS=$(sqlite3 "$DB_PATH" "SELECT COUNT(*) FROM api_metrics")
+  echo "      • $TOTAL_RECORDS records preserved"
+fi
+echo ""
+
+# Step 4: Disable optimization features
+echo -e "${BLUE}Step 4: Disabling optimization features${NC}"
+
+# Create rollback environment file
+cat > "$BACKUP_DIR/rollback_env.sh" << 'EOF'
+# Token Optimization Rollback Settings
+# Generated on: $(date)
+
+# Disable all optimization features
+export TOKEN_OPT_BATCHING_ENABLED=false
+export TOKEN_OPT_AGGRESSIVE_CACHE=false
+export TOKEN_OPT_PREFETCH_ENABLED=false
+
+# Keep monitoring enabled for comparison
+export TOKEN_OPT_MONITORING_ENABLED=true
+
+echo "Token optimization features disabled"
+echo "Monitoring remains active for comparison"
+EOF
+
+# Apply rollback settings to current session
+export TOKEN_OPT_BATCHING_ENABLED=false
+export TOKEN_OPT_AGGRESSIVE_CACHE=false
+export TOKEN_OPT_PREFETCH_ENABLED=false
+export TOKEN_OPT_MONITORING_ENABLED=true
+
+echo "   ✓ Optimization features disabled"
+echo "      • Batching: DISABLED"
+echo "      • Aggressive Cache: DISABLED"
+echo "      • Prefetching: DISABLED"
+echo "      • Monitoring: ENABLED (for comparison)"
+echo ""
+
+# Step 5: Remove active hooks
+echo -e "${BLUE}Step 5: Removing active hooks${NC}"
+if [ -d .claude/hooks ]; then
+  # Move hooks to disabled directory instead of deleting
+  mkdir -p .claude/hooks.disabled
+
+  if [ -f .claude/hooks/post-tool-use-tokens ]; then
+    mv .claude/hooks/post-tool-use-tokens .claude/hooks.disabled/
+    echo "   ✓ Disabled: post-tool-use-tokens"
+  fi
+
+  if [ -f .claude/hooks/user-prompt-submit-cache ]; then
+    mv .claude/hooks/user-prompt-submit-cache .claude/hooks.disabled/
+    echo "   ✓ Disabled: user-prompt-submit-cache"
+  fi
+else
+  echo "   - No hooks to remove"
+fi
+echo ""
+
+# Step 6: Clear caches (optional)
+echo -e "${BLUE}Step 6: Cache Management${NC}"
+read -p "Clear Redis cache? (y/N): " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+  if command -v redis-cli &> /dev/null; then
+    redis-cli FLUSHDB &> /dev/null && echo "   ✓ Redis cache cleared" || echo "   ⚠ Redis not running"
+  else
+    echo "   - Redis not installed"
+  fi
+else
+  echo "   - Redis cache preserved"
+fi
+
+read -p "Clear SQLite cache entries? (y/N): " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+  # Clear cache entries but preserve metrics
+  sqlite3 "$DB_PATH" "UPDATE cards SET cached_at = NULL WHERE cached_at IS NOT NULL" 2>/dev/null || true
+  echo "   ✓ SQLite cache markers cleared"
+else
+  echo "   - SQLite cache preserved"
+fi
+echo ""
+
+# Step 7: Generate rollback report
+echo -e "${BLUE}Step 7: Generating rollback report${NC}"
+
+# Calculate impact metrics
+if [ "$PRESERVE_METRICS" = "--preserve-metrics" ]; then
+  BEFORE_CACHE_RATE=$(sqlite3 "$DB_PATH" "
+    SELECT COALESCE(ROUND(100.0 * SUM(CASE WHEN cache_hit THEN 1 ELSE 0 END) / COUNT(*), 2), 0)
+    FROM api_metrics
+    WHERE timestamp > strftime('%s', 'now', '-1 day')
+  ")
+
+  AVG_TOKENS_HOUR=$(sqlite3 "$DB_PATH" "
+    SELECT COALESCE(ROUND(AVG(tokens_per_hour), 0), 0) FROM (
+      SELECT SUM(tokens_used) as tokens_per_hour
+      FROM api_metrics
+      WHERE timestamp > strftime('%s', 'now', '-7 days')
+      GROUP BY timestamp / 3600
+    )
+  ")
+
+  echo "   Performance before rollback:"
+  echo "      • Cache hit rate: ${BEFORE_CACHE_RATE}%"
+  echo "      • Avg tokens/hour: $AVG_TOKENS_HOUR"
+fi
+
+# Create rollback summary
+cat > "$BACKUP_DIR/rollback_summary.txt" << EOF
+Token Optimization Rollback Summary
+===================================
+Date: $(date)
+Backup Location: $BACKUP_DIR
+
+Actions Taken:
+- Hooks backed up and disabled
+- Optimization flags set to false
+- Monitoring kept active for comparison
+- Metrics data preserved
+
+To Restore Optimizations:
+1. Re-enable hooks:
+   mv .claude/hooks.disabled/* .claude/hooks/
+
+2. Set environment variables:
+   export TOKEN_OPT_BATCHING_ENABLED=true
+   export TOKEN_OPT_AGGRESSIVE_CACHE=true
+
+3. Or restore from backup:
+   cp -r $BACKUP_DIR/hooks/* .claude/hooks/
+
+Metrics Status:
+- Database records: Preserved
+- Metrics files: Backed up
+- Monitoring: Still active
+
+Next Steps:
+- Monitor token usage without optimizations
+- Compare metrics to optimized period
+- Run /token-optimize to view current status
+EOF
+
+echo "   ✓ Rollback report saved to:"
+echo "      $BACKUP_DIR/rollback_summary.txt"
+echo ""
+
+# Step 8: Final status
+echo -e "${GREEN}===============================================${NC}"
+echo -e "${GREEN}       Rollback Completed Successfully         ${NC}"
+echo -e "${GREEN}===============================================${NC}"
+echo ""
+echo "Summary:"
+echo "   ✓ All optimization features disabled"
+echo "   ✓ Hooks backed up to: $BACKUP_DIR"
+echo "   ✓ Metrics preserved for comparison"
+echo "   ✓ Monitoring remains active"
+echo ""
+echo -e "${YELLOW}Next Steps:${NC}"
+echo "   1. Run ${GREEN}/token-optimize${NC} to see current metrics"
+echo "   2. Compare token usage with optimizations off"
+echo "   3. To re-enable: ${GREEN}source $BACKUP_DIR/rollback_env.sh${NC}"
+echo ""
+echo -e "${BLUE}Tip:${NC} Keep monitoring for 24 hours to compare performance"
+echo ""
+
+# Create restore script
+cat > "$BACKUP_DIR/restore_optimizations.sh" << 'EOF'
+#!/bin/bash
+# Quick restore script for token optimizations
+
+echo "Restoring token optimizations..."
+
+# Re-enable hooks
+if [ -d .claude/hooks.disabled ]; then
+  mv .claude/hooks.disabled/* .claude/hooks/ 2>/dev/null || true
+  echo "✓ Hooks restored"
+fi
+
+# Re-enable features
+export TOKEN_OPT_BATCHING_ENABLED=true
+export TOKEN_OPT_AGGRESSIVE_CACHE=true
+export TOKEN_OPT_PREFETCH_ENABLED=false
+export TOKEN_OPT_MONITORING_ENABLED=true
+
+echo "✓ Optimization features re-enabled"
+echo ""
+echo "Run /token-optimize to verify status"
+EOF
+
+chmod +x "$BACKUP_DIR/restore_optimizations.sh"
+echo "Restore script created: $BACKUP_DIR/restore_optimizations.sh"

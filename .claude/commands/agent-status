@@ -1,0 +1,69 @@
+#!/bin/bash
+
+# Claude Custom Command: Check Agent Status
+# Goal: Display current multi-agent coordination status
+# Usage: /agent-status
+
+set -e
+
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+STATUS_FILE="$PROJECT_ROOT/status/status.json"
+
+echo "📊 Multi-Agent Coordination Status"
+echo ""
+
+# Check if status file exists
+if [ ! -f "$STATUS_FILE" ]; then
+    echo "❌ No active multi-agent session found"
+    echo "   Run: /launch-agents or ./scripts/init-multi-agent-session.sh"
+    exit 1
+fi
+
+# Display session info
+echo "🔄 Session Information:"
+SESSION_ID=$(jq -r '.session.sessionId' "$STATUS_FILE")
+START_TIME=$(jq -r '.session.startTime' "$STATUS_FILE")
+IS_ACTIVE=$(jq -r '.session.isActive' "$STATUS_FILE")
+LAST_UPDATE=$(jq -r '.session.lastUpdate' "$STATUS_FILE")
+
+echo "   ID: $SESSION_ID"
+echo "   Started: $START_TIME"
+echo "   Active: $IS_ACTIVE"
+echo "   Last Update: $LAST_UPDATE"
+echo ""
+
+# Display agent status
+echo "🤖 Agent Status:"
+jq -r '.agents | to_entries[] | "   \(.key): \(.value.status) - \(.value.currentTask // "No active task")"' "$STATUS_FILE"
+echo ""
+
+# Display file modifications
+echo "📝 Recent File Modifications:"
+jq -r '.agents | to_entries[] | select(.value.filesModified | length > 0) | "   \(.key): \(.value.filesModified | length) files"' "$STATUS_FILE"
+
+# Check if any modifications exist
+MODIFICATIONS=$(jq -r '.agents | to_entries[] | select(.value.filesModified | length > 0) | .key' "$STATUS_FILE")
+if [ -z "$MODIFICATIONS" ]; then
+    echo "   No file modifications detected"
+fi
+echo ""
+
+# Display integration points
+echo "🔗 Integration Points:"
+jq -r '.integrationPoints[] | "   \(.from) → \(.to): \(.type) (\(.status))"' "$STATUS_FILE"
+echo ""
+
+# Display conflicts if any
+CONFLICTS=$(jq -r '.conflicts | length' "$STATUS_FILE")
+if [ "$CONFLICTS" -gt 0 ]; then
+    echo "⚠️  Active Conflicts:"
+    jq -r '.conflicts[] | "   \(.file): \(.agents | join(", "))"' "$STATUS_FILE"
+    echo ""
+fi
+
+# Quick actions
+echo "💡 Quick Actions:"
+echo "   • Update status: echo 'task description' | ./scripts/update-agent-status.sh"
+echo "   • Monitor live: watch -n 5 'jq . status/status.json'"
+echo "   • Integrate: ./scripts/integrate-all-agents.sh"
+echo "   • View territories: /agent-territories"
