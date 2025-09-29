@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(printf \"rs\\n\")",
+      "Read(//Users/{{USERNAME}}/**)",
+      "Bash(zsh:*)",
+      "Bash(node:*)",
+      "Bash(npm:*)",
+      "Bash(yarn:*)",
+      "Bash(pnpm:*)",
+      "Bash(rm:*)",
+      "Bash(mkdir:*)",
+      "Bash(mv:*)",
+      "Bash(cp:*)",
+      "Bash(git:*)",
+      "Write(*)",
+      "Edit(*)",
+      "MultiEdit(*)",
+      "Glob(*)",
+      "Grep(*)",
+      "Read(*)",
+      "WebSearch(*)",
+      "WebFetch(*)",
+      "mcp__zen__*",
+      "mcp__serena__*",
+      "Task(*)"
+    ],
+    "deny": [],
+    "ask": []
+  },
+  "outputStyle": "Direct Objective"
+}

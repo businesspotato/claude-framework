@@ -1,79 +1,152 @@
 # Claude Framework
 
-**Reusable development patterns and tools for Claude/Claude Code projects**
+A comprehensive framework for structured development with Claude Code, featuring autonomous multi-instance coordination, specialized subagents, and systematic verification protocols.
 
 ## Overview
 
-Claude Framework provides standardized development patterns, multi-agent coordination, API design patterns, and workflow management for projects using Claude or Claude Code as the primary development assistant.
+Claude Framework provides advanced development capabilities including autonomous multi-instance coordination, specialized subagent orchestration, architecture-agnostic templates, and systematic verification protocols for scalable, reliable development workflows.
 
-## Features
+## 🚀 Key Features
 
-### 🤖 Multi-Agent Coordination
-- **16 specialized subagents** for different development domains
-- **Parallel execution patterns** for maximum development velocity
-- **Territory assignment** and conflict resolution protocols
-- **Status broadcasting** for coordination
+### Autonomous Multi-Instance Coordination
+- **3+ Instance Coordination**: Backend, Frontend, Infrastructure, and Coordinator instances
+- **Autonomous Handoffs**: Automatic verification and approval without manual intervention
+- **Integration Oversight**: Comprehensive layer verification prevents data pipeline breaks
+- **Failure Recovery**: Systematic remediation protocols and emergency escalation
 
-### 🏗️ Development Workflow
-- **Test-Driven Development (TDD)** integration
-- **Task management patterns** with progress tracking
-- **Phase-based development** (Planning → Development → Debugging → Verification)
-- **Quality gates** and validation checkpoints
+### Specialized Subagent Orchestration
+- **16 Specialized Subagents**: From API design to security auditing
+- **Sequential Workflows**: Structured phase progression (Planning → Development → Testing → Verification)
+- **Context-Aware Routing**: Automatic subagent selection based on task complexity
+- **Quality Gates**: Built-in validation at each development phase
 
-### 🔌 API Design Patterns
-- **Standardized response formats** across all services
-- **Error handling strategies** with recovery instructions
-- **Rate limiting** and connection pooling patterns
-- **Authentication** and security best practices
+### Architecture-Agnostic Templates
+- **Web Applications**: React/Vue/Angular + Express/FastAPI/Django
+- **Microservices**: Service mesh, API gateway, container orchestration
+- **Mobile Applications**: React Native, Flutter, native iOS/Android
+- **Custom Architectures**: Fully customizable instance roles and verification
 
-### 📝 Documentation Standards
-- **Living documentation** patterns
-- **Example-driven** API documentation
-- **Progressive disclosure** of complexity
-- **Troubleshooting** and solution guides
+### Systematic Verification Framework
+- **Layer-Based Verification**: Database → Service → Communication → Presentation
+- **Automated Quality Gates**: Test coverage, performance benchmarks, security scans
+- **Integration Testing**: End-to-end workflows across all architectural layers
+- **Performance Monitoring**: Real-time regression detection and optimization
 
-## Quick Start
-
-### 1. Add as Submodule
-```bash
-# In your project root
-git submodule add https://github.com/[your-username]/claude-framework.git claude-framework
-git submodule update --init --recursive
-```
-
-### 2. Project Setup
-```bash
-# Copy template to your project root
-cp claude-framework/CLAUDE.template.md CLAUDE.md
-
-# Edit CLAUDE.md with your project details
-# Replace {{PROJECT_NAME}}, {{PROJECT_DESCRIPTION}}, etc.
-```
-
-### 3. Configure Subagents
-```bash
-# Copy agent configurations (if needed)
-cp -r claude-framework/.claude/ .claude/
-
-# Customize agent configurations for your project
-```
-
-## Directory Structure
+## 📁 Framework Structure
 
 ```
 claude-framework/
-├── .claude/                    # Subagent configurations
-│   ├── agents/                # 16 specialized subagents
-│   ├── commands/              # Custom Claude commands
-│   └── settings.local.json    # Local settings template
-├── docs/
-│   ├── api-patterns.md        # Generic API design patterns
-│   ├── development-workflow.md # TDD & task management
-│   └── multiagent.md          # Multi-agent coordination
-├── CLAUDE.template.md         # Template for project CLAUDE.md
-├── README.md                  # This file
-└── .gitignore                # Framework-specific ignores
+├── docs/                                    # Core framework documentation
+│   ├── autonomous-multi-instance-framework.md    # Complete framework guide
+│   ├── asynchronous-handoff-protocols.md        # Handoff automation
+│   ├── multi-instance-coordination.md           # Instance coordination
+│   └── multiagent.md                           # Subagent orchestration
+├── templates/                              # Project setup templates
+│   ├── quick-setup-guide.md               # Getting started guide
+│   ├── multi-instance-setup-template.yaml # Generic configuration
+│   ├── verification-script-template.js    # Verification framework
+│   └── architecture-patterns/             # Architecture-specific templates
+│       ├── web-application.yaml          # Web app configuration
+│       ├── microservices.yaml           # Microservices configuration
+│       └── mobile-application.yaml      # Mobile app configuration
+└── .claude/agents/                        # Subagent configurations
+    ├── ai-engineer.md                     # AI/ML system design
+    ├── api-designer.md                    # REST/GraphQL APIs
+    ├── backend-designer.md               # System architecture
+    ├── code-reviewer.md                  # Security & quality audits
+    ├── database-admin.md                 # Database optimization
+    ├── deployment-engineer.md            # CI/CD & deployment
+    ├── electron-pro.md                   # Desktop applications
+    ├── jenny.md                          # Requirements validation
+    ├── karen.md                          # Reality checking
+    ├── multiagent-organizer.md          # Workflow orchestration
+    ├── task-completion-validator.md      # Feature verification
+    ├── ui-comprehensive-tester.md        # E2E testing
+    └── ultrathink-debugger.md           # Complex debugging
 ```
+
+## 🎯 Quick Start
+
+### 1. Choose Your Architecture
+
+```bash
+# Web Application (React + Express)
+cp claude-framework/templates/architecture-patterns/web-application.yaml project-config.yaml
+
+# Microservices (Docker + Kubernetes)
+cp claude-framework/templates/architecture-patterns/microservices.yaml project-config.yaml
+
+# Mobile App (React Native)
+cp claude-framework/templates/architecture-patterns/mobile-application.yaml project-config.yaml
+
+# Custom Architecture
+cp claude-framework/templates/multi-instance-setup-template.yaml project-config.yaml
+```
+
+### 2. Set Up Project Structure
+
+```bash
+# Create required directories
+mkdir -p docs/verification-failures/{failure-templates,failure-history}
+mkdir -p scripts/verification
+mkdir -p status
+mkdir -p docs/instance-logs
+
+# Copy verification framework
+cp claude-framework/templates/verification-script-template.js scripts/verification/project-verification.js
+
+# Initialize status tracking
+echo '{}' > status/multi-instance-status.json
+```
+
+### 3. Configure Instances
+
+Edit your `project-config.yaml` and replace template variables:
+
+```yaml
+project_config:
+  name: "Your Project Name"
+  architecture_type: "web_app"  # or microservices, mobile_app
+  coordination_mode: "THREE_INSTANCE_AUTONOMOUS"
+
+instances:
+  backend:
+    role: "BACKEND_DEVELOPMENT"
+    specializations:
+      - "API development"
+      - "Database operations"
+    file_patterns:
+      - "src/api/**/*"
+      - "src/backend/**/*"
+```
+
+### 4. Test Your Setup
+
+```bash
+# Test verification script
+node scripts/verification/project-verification.js
+
+# Verify configuration
+jq . project-config.yaml
+```
+
+## 🏗️ Architecture Patterns
+
+### Web Application (3 Instances)
+- **Backend Instance**: API development, database, authentication
+- **Frontend Instance**: Components, state management, UI/UX
+- **Coordinator Instance**: Integration testing, performance monitoring
+
+### Microservices (4 Instances)
+- **Services Instance**: Individual microservice development
+- **Gateway Instance**: API gateway, routing, security
+- **Infrastructure Instance**: Deployment, monitoring, orchestration
+- **Coordinator Instance**: Cross-service integration, system health
+
+### Mobile Application (3 Instances)
+- **Mobile UI Instance**: Screens, components, navigation
+- **App Logic Instance**: State, business logic, API integration
+- **Coordinator Instance**: Cross-platform testing, app store compliance
 
 ## Available Subagents
 
@@ -125,6 +198,47 @@ Task({ subagent_type: "api-designer", prompt: "Design API contracts" })
 2. **Development Phase**: [context-specific] → ui-comprehensive-tester → code-quality-pragmatist
 3. **Debugging Phase**: ultrathink-debugger → code-reviewer
 4. **Verification Phase**: task-completion-validator → karen → jenny
+
+## Output Style Configuration
+
+### Direct Objective Style
+The framework includes a "Direct Objective" output style that maintains professional, objective communication focused on facts and solutions. This style:
+
+- **Avoids excessive agreement or deference**
+- **Uses measured language without sycophantic patterns**
+- **Focuses on technical accuracy and problem-solving**
+- **Provides direct, objective technical information**
+- **Prioritizes truthfulness over validation**
+
+### Settings Template
+The framework provides two settings templates:
+
+#### settings.template.json
+Basic template with core permissions and Direct Objective style.
+
+#### settings.local.template.json
+Extended template with project-specific placeholders:
+- `{{USERNAME}}` - Replace with your system username
+- `{{PROJECT_COMMAND_PREFIX}}` - Replace with your project's CLI command prefix
+
+### Configuration Options
+```json
+{
+  "outputStyle": "Direct Objective",
+  "permissions": {
+    "allow": [
+      "Bash(printf \"rs\n\")",
+      "mcp__zen__*",
+      "Task(*)"
+    ]
+  }
+}
+```
+
+### Integration
+1. Copy template to your project: `cp claude-framework/.claude/settings.local.template.json .claude/settings.local.json`
+2. Replace placeholders with your project details
+3. Customize permissions as needed for your specific project requirements
 
 ## Integration Examples
 
@@ -193,6 +307,15 @@ This framework follows semantic versioning:
 ## License
 
 MIT License - See LICENSE file for details
+
+## Related Documentation
+
+- [Multi-Agent Coordination](docs/multiagent.md) - Advanced parallel development patterns
+- [Development Workflow](docs/development-workflow.md) - TDD integration and task management
+- [API Design Patterns](docs/api-patterns.md) - Standardized API development guidelines
+- [MCP Best Practices](docs/mcp-best-practices.md) - Critical MCP integration rules and patterns
+- [MCP Usage Guide](docs/mcp-usage-guide.md) - Comprehensive MCP workflow documentation
+- [Output Style Setup](docs/output-style-setup.md) - Communication style configuration guide
 
 ## Related Projects
 

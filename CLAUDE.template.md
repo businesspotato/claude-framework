@@ -2,13 +2,24 @@
 
 ## ⚠️ CRITICAL RULES - Read First
 
+- **ALWAYS check MCP server availability before planning or development** - Use `mcp__zen__version` or similar to verify MCP servers are functional before beginning any work phase
 - **ALWAYS follow Sequential Orchestration Framework** - Use appropriate subagents in correct phase order (Planning → Development → Debugging → Verification) as defined in Automatic Subagent Orchestration section
 - **DO NOT explore or read documentation files unless specifically needed for the current task to conserve tokens and maintain focus**
+- **Serena MCP Output: Keep concise** - Only explain verbosely when asking user questions or if user is confused. Avoid repeating function names and parameters in output
 - **Always verify UI data mapping matches backend response structure** - See `docs/project/api-implementation.md` for IPC patterns
 - **Use loggingService, never console.log in production** - See `docs/project/technical-implementation.md` for logging standards
 - **Check cache to ensure changes are actually taking place when updating features that use them**
-- **Database/cache/backend changes require corresponding UI front-end updates to display properly** - See `docs/project/system-architecture.md` for data flow
+- **Full-Stack Layer Synchronization Required** - Any change must be synchronized across ALL layers: Database → Backend Services → IPC Channels → Frontend Hooks → UI Components → Cache. Missing ANY layer causes runtime failures. See `docs/project/system-architecture.md` for complete data flow
 - **Always include TDD in phase planning sessions** - See `claude-framework/docs/development-workflow.md` for guidelines
+- **ALWAYS use Direct Objective communication style** - Maintain professional, objective tone that focuses on facts and solutions. Avoid excessive agreement or deference. Use measured language without sycophantic patterns.
+- **ALWAYS use karen subagent for reality checks before claiming completion** - Before responding with status updates or completion claims, use Task tool with karen subagent to verify actual functionality and prevent false realities. Karen provides honest assessment of what actually works vs what should work.
+- **NEVER claim application restart is successful without verification** - Always check actual application status via BashOutput, process logs, or explicit verification before reporting success. False success claims waste user time and break trust.
+- **ALWAYS monitor application logs with BashOutput after startup** - After any application start/restart, use BashOutput tool to check for React errors, console warnings, unhandled promise rejections, and database errors. Check both stdout and stderr. Create automated feedback loop to catch issues immediately rather than waiting for user reports.
+- **NEVER ask permission for application restart commands** - Execute `printf "rs
+"` directly without asking user permission. This is a standard development command for hot-reloading and should be used freely during development cycles.
+- **ALWAYS verify cache/IPC synchronization at each layer transition** - Check cache invalidation, IPC handler registration, and data flow between Database → Backend → IPC → Frontend → UI. Missing cache verification creates invisible barriers that block data from working properly. See `claude-framework/docs/cache-ipc-verification.md` for protocols.
+- **Test cache invalidation after any backend data changes** - Specifically test with known examples (e.g., "{{TEST_CARD_EXAMPLE}}") to ensure UI reflects backend changes. Cache issues are invisible and cause frustrating data synchronization failures.
+- **Verify IPC handler registration matches frontend hook calls** - When changing backend handlers, ensure frontend hooks use matching invoke calls and cache invalidation keys. Missing synchronization causes silent runtime failures.
 
 ## Development Cycle Management
 
@@ -43,6 +54,13 @@
 
 See `docs/index.md#quick-start` for setup and commands
 
+## Communication Style
+
+**Direct Objective** - Professional, fact-focused communication style configured via `.claude/settings.local.json`
+- See `claude-framework/docs/output-style-setup.md` for configuration details
+- Maintains objective tone focused on facts and solutions
+- Avoids excessive agreement patterns in favor of technical accuracy
+
 ## Available Subagents
 
 **16 specialized subagents** configured in `claude-framework/.claude/agents/` - See `claude-framework/docs/multiagent.md` for detailed descriptions
@@ -73,7 +91,24 @@ See `docs/index.md#quick-start` for setup and commands
 
 **Usage**: Invoke via `Task({ subagent_type: "subagent-name", prompt: "task description" })`
 
-## Multi-Agent Mode
+## Safe Multi-Instance Development
+
+**Current Approach**: Multiple Claude Code instances with sequential orchestration - See `claude-framework/docs/multi-instance-coordination.md` for comprehensive protocols
+
+**Key Safety Principles:**
+- **Sequential Execution**: Use multiple instances but coordinate changes sequentially
+- **Instance Specialization**: Each instance maintains specialized context (backend, frontend, AI, database)
+- **Handoff Coordination**: Clear documentation and status communication between instances
+- **Cache/IPC Verification**: Comprehensive verification at each layer transition to prevent invisible barriers
+- **Single Restart Authority**: Designate one instance for application lifecycle management
+
+**Instance Roles:**
+- **Instance 1**: Backend/API development and IPC handler management
+- **Instance 2**: Frontend/UI development and component integration
+- **Instance 3**: AI/ML pipeline and processing services
+- **Instance 4**: Database/DevOps and cache management
+
+## Multi-Agent Mode (Advanced)
 
 **Advanced parallel development** - See `claude-framework/docs/multiagent.md#multi-agent-coordination-protocol` for comprehensive coordination protocols
 
@@ -164,6 +199,22 @@ See `docs/index.md#quick-start` for setup and commands
 - **Code Analysis**: `mcp__serena__*` tools for semantic code operations
 - **Knowledge Graph**: `mcp__knowledge-graph__*` for project entity relationships
 - **Advanced Reasoning**: `mcp__zen__*` for complex problem solving and planning
+
+## Application Restart Verification Protocol
+
+**When restarting the application:**
+
+1. **Use kill/start instead of printf "rs
+" if rs fails**
+2. **Wait for complete startup** (check for "Window ready to show" and "📊 System Health: X/X services healthy")
+3. **Monitor for errors in stderr** (UnhandledPromiseRejectionWarning, database schema errors)
+4. **Verify core functionality** (expected data loads, no React crashes)
+5. **Only claim success after comprehensive verification**
+
+**Log Monitoring Requirements:**
+- Use BashOutput tool to check both stdout and stderr after restart
+- Create automated feedback loop to catch issues immediately
+- Check for React errors, console warnings, unhandled promise rejections, database errors
 
 ## Current Sprint Focus
 

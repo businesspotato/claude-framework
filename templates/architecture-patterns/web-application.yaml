@@ -1,0 +1,159 @@
+# Web Application Multi-Instance Configuration Template
+# For React/Vue/Angular + Express/FastAPI/Django architectures
+
+project_config:
+  name: "{{PROJECT_NAME}}"
+  architecture_type: "web_app"
+  coordination_mode: "THREE_INSTANCE_AUTONOMOUS"
+  monitoring_interval: 30000
+
+instances:
+  backend:
+    role: "BACKEND_API_DEVELOPMENT"
+    specializations:
+      - "REST API development"
+      - "Database operations and models"
+      - "Authentication and authorization"
+      - "Business logic implementation"
+      - "API documentation and testing"
+    file_patterns:
+      - "src/api/**/*"
+      - "src/backend/**/*"
+      - "src/models/**/*"
+      - "src/routes/**/*"
+      - "src/middleware/**/*"
+      - "src/services/**/*"
+      - "database/**/*"
+      - "migrations/**/*"
+    verification_scripts:
+      - "api_contract_verification"
+      - "database_schema_verification"
+      - "authentication_verification"
+
+  frontend:
+    role: "FRONTEND_UI_DEVELOPMENT"
+    specializations:
+      - "Component development (React/Vue/Angular)"
+      - "State management (Redux/Vuex/NgRx)"
+      - "User interface and experience"
+      - "Client-side routing"
+      - "API integration and error handling"
+    file_patterns:
+      - "src/components/**/*"
+      - "src/pages/**/*"
+      - "src/views/**/*"
+      - "src/store/**/*"
+      - "src/hooks/**/*"
+      - "src/services/**/*"
+      - "src/styles/**/*"
+      - "public/**/*"
+    verification_scripts:
+      - "component_integration_verification"
+      - "state_management_verification"
+      - "ui_consistency_verification"
+
+  coordinator:
+    role: "INTEGRATION_COORDINATION"
+    specializations:
+      - "API contract validation"
+      - "End-to-end testing coordination"
+      - "Performance monitoring"
+      - "Security scanning"
+      - "Deployment coordination"
+    file_patterns:
+      - "docs/**/*"
+      - "scripts/verification/**/*"
+      - "tests/integration/**/*"
+      - "tests/e2e/**/*"
+    verification_scripts:
+      - "api_integration_verification"
+      - "frontend_backend_integration"
+      - "performance_verification"
+
+architectural_layers:
+  database_layer:
+    name: "database_layer"
+    description: "Database and data persistence layer"
+    verification_script: "verify_database_layer"
+    dependencies: []
+    performance_targets:
+      - metric: "query_response_time"
+        target: "<100ms"
+      - metric: "connection_pool_efficiency"
+        target: ">90%"
+
+  api_layer:
+    name: "api_layer"
+    description: "REST API endpoints and business logic"
+    verification_script: "verify_api_layer"
+    dependencies: ["database_layer"]
+    performance_targets:
+      - metric: "api_response_time"
+        target: "<200ms"
+      - metric: "error_rate"
+        target: "<1%"
+
+  frontend_layer:
+    name: "frontend_layer"
+    description: "Client-side application and user interface"
+    verification_script: "verify_frontend_layer"
+    dependencies: ["api_layer"]
+    performance_targets:
+      - metric: "page_load_time"
+        target: "<3s"
+      - metric: "first_contentful_paint"
+        target: "<1.5s"
+
+integration_points:
+  - type: "API_CONTRACTS"
+    description: "REST API contracts between frontend and backend"
+    affected_instances: ["backend", "frontend"]
+    verification_method: "openapi_contract_testing"
+
+  - type: "AUTHENTICATION_FLOW"
+    description: "User authentication and session management"
+    affected_instances: ["backend", "frontend"]
+    verification_method: "auth_flow_testing"
+
+  - type: "STATE_SYNCHRONIZATION"
+    description: "Client-server state synchronization"
+    affected_instances: ["backend", "frontend"]
+    verification_method: "state_sync_testing"
+
+autonomous_coordination:
+  auto_approval_criteria:
+    - "All API tests pass with 100% success rate"
+    - "Frontend components render without errors"
+    - "Authentication flows work end-to-end"
+    - "Performance benchmarks met"
+    - "No security vulnerabilities detected"
+
+  escalation_triggers:
+    - "API breaking changes detected"
+    - "Authentication system failures"
+    - "Performance regression >20%"
+    - "Critical security vulnerabilities"
+
+verification_requirements:
+  critical_tests:
+    - name: "user_authentication_flow"
+      description: "Complete user login/logout workflow"
+      timeout: "120s"
+
+    - name: "api_endpoint_coverage"
+      description: "All API endpoints respond correctly"
+      timeout: "180s"
+
+    - name: "frontend_component_rendering"
+      description: "All components render without errors"
+      timeout: "60s"
+
+  quality_gates:
+    - metric: "api_test_coverage"
+      threshold: ">90%"
+
+    - metric: "frontend_test_coverage"
+      threshold: ">80%"
+
+    - metric: "performance_score"
+      threshold: ">85%"

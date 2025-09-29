@@ -1,0 +1,204 @@
+# Mobile Application Multi-Instance Configuration Template
+# For React Native, Flutter, or native iOS/Android development
+
+project_config:
+  name: "{{PROJECT_NAME}}"
+  architecture_type: "mobile_app"
+  coordination_mode: "THREE_INSTANCE_AUTONOMOUS"
+  monitoring_interval: 30000
+
+instances:
+  mobile_ui:
+    role: "MOBILE_UI_DEVELOPMENT"
+    specializations:
+      - "Mobile UI components and screens"
+      - "Navigation and user flow"
+      - "Platform-specific UI adaptations"
+      - "Accessibility and responsive design"
+      - "Animation and user interactions"
+    file_patterns:
+      - "src/screens/**/*"
+      - "src/components/**/*"
+      - "src/navigation/**/*"
+      - "src/styles/**/*"
+      - "src/animations/**/*"
+      - "android/app/src/**/*"
+      - "ios/**/*"
+    verification_scripts:
+      - "ui_component_verification"
+      - "navigation_verification"
+      - "accessibility_verification"
+
+  app_logic:
+    role: "APP_LOGIC_DEVELOPMENT"
+    specializations:
+      - "Business logic and state management"
+      - "API integration and data fetching"
+      - "Local storage and offline functionality"
+      - "Push notifications and background tasks"
+      - "Device API integrations (camera, GPS, etc.)"
+    file_patterns:
+      - "src/store/**/*"
+      - "src/services/**/*"
+      - "src/api/**/*"
+      - "src/utils/**/*"
+      - "src/hooks/**/*"
+      - "src/context/**/*"
+      - "src/database/**/*"
+    verification_scripts:
+      - "state_management_verification"
+      - "api_integration_verification"
+      - "offline_functionality_verification"
+
+  coordinator:
+    role: "INTEGRATION_COORDINATION"
+    specializations:
+      - "Cross-platform compatibility testing"
+      - "Performance optimization"
+      - "App store compliance verification"
+      - "Device testing coordination"
+      - "Release management"
+    file_patterns:
+      - "docs/**/*"
+      - "scripts/verification/**/*"
+      - "tests/**/*"
+      - "__tests__/**/*"
+      - "e2e/**/*"
+    verification_scripts:
+      - "cross_platform_verification"
+      - "performance_verification"
+      - "app_store_compliance_verification"
+
+architectural_layers:
+  presentation_layer:
+    name: "presentation_layer"
+    description: "UI components, screens, and user interactions"
+    verification_script: "verify_presentation_layer"
+    dependencies: []
+    performance_targets:
+      - metric: "screen_render_time"
+        target: "<200ms"
+      - metric: "animation_frame_rate"
+        target: ">58fps"
+
+  business_logic_layer:
+    name: "business_logic_layer"
+    description: "Application logic and state management"
+    verification_script: "verify_business_logic_layer"
+    dependencies: ["presentation_layer"]
+    performance_targets:
+      - metric: "state_update_time"
+        target: "<50ms"
+      - metric: "memory_usage"
+        target: "<100MB"
+
+  data_layer:
+    name: "data_layer"
+    description: "API integration, local storage, and data persistence"
+    verification_script: "verify_data_layer"
+    dependencies: ["business_logic_layer"]
+    performance_targets:
+      - metric: "api_response_time"
+        target: "<300ms"
+      - metric: "local_storage_access"
+        target: "<10ms"
+
+  platform_layer:
+    name: "platform_layer"
+    description: "Native platform integrations and device APIs"
+    verification_script: "verify_platform_layer"
+    dependencies: ["data_layer"]
+    performance_targets:
+      - metric: "native_bridge_latency"
+        target: "<20ms"
+      - metric: "battery_consumption"
+        target: "<5%/hour"
+
+integration_points:
+  - type: "UI_STATE_BINDING"
+    description: "UI components properly reflect application state"
+    affected_instances: ["mobile_ui", "app_logic"]
+    verification_method: "state_ui_binding_testing"
+
+  - type: "API_INTEGRATION"
+    description: "Mobile app integrates correctly with backend APIs"
+    affected_instances: ["app_logic", "coordinator"]
+    verification_method: "mobile_api_testing"
+
+  - type: "NAVIGATION_FLOW"
+    description: "Screen navigation and deep linking"
+    affected_instances: ["mobile_ui", "app_logic"]
+    verification_method: "navigation_flow_testing"
+
+  - type: "OFFLINE_SYNC"
+    description: "Offline functionality and data synchronization"
+    affected_instances: ["app_logic", "coordinator"]
+    verification_method: "offline_sync_testing"
+
+autonomous_coordination:
+  auto_approval_criteria:
+    - "All UI components render correctly on both platforms"
+    - "Navigation flows work without errors"
+    - "API integration handles offline scenarios"
+    - "Performance meets mobile benchmarks"
+    - "No memory leaks detected"
+    - "App store guidelines compliance verified"
+
+  escalation_triggers:
+    - "Platform-specific compatibility issues"
+    - "Performance regression >25%"
+    - "App store rejection criteria detected"
+    - "Critical user experience issues"
+    - "Security vulnerabilities in device integrations"
+
+verification_requirements:
+  critical_tests:
+    - name: "user_onboarding_flow"
+      description: "Complete user registration and onboarding"
+      timeout: "180s"
+
+    - name: "offline_to_online_sync"
+      description: "Data synchronization when coming back online"
+      timeout: "120s"
+
+    - name: "push_notification_handling"
+      description: "Push notifications trigger correct app behavior"
+      timeout: "60s"
+
+    - name: "cross_platform_consistency"
+      description: "App behaves consistently across iOS and Android"
+      timeout: "300s"
+
+  quality_gates:
+    - metric: "ui_test_coverage"
+      threshold: ">80%"
+
+    - metric: "business_logic_test_coverage"
+      threshold: ">90%"
+
+    - metric: "crash_rate"
+      threshold: "<0.1%"
+
+    - metric: "app_startup_time"
+      threshold: "<3s"
+
+platform_specific:
+  ios:
+    verification_requirements:
+      - "iOS Human Interface Guidelines compliance"
+      - "App Store Review Guidelines compliance"
+      - "iOS performance benchmarks"
+    file_patterns:
+      - "ios/**/*"
+      - "*.xcodeproj/**/*"
+      - "*.xcworkspace/**/*"
+
+  android:
+    verification_requirements:
+      - "Material Design Guidelines compliance"
+      - "Google Play Store policies compliance"
+      - "Android performance benchmarks"
+    file_patterns:
+      - "android/**/*"
+      - "*.gradle"
+      - "gradle/**/*"

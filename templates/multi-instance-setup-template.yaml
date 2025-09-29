@@ -1,0 +1,161 @@
+# Multi-Instance Coordination Setup Template
+# Copy and customize this template for your project architecture
+
+project_config:
+  name: "{{PROJECT_NAME}}"
+  architecture_type: "{{ARCHITECTURE_TYPE}}" # web_app | mobile_app | microservices | data_system | desktop_app
+  coordination_mode: "THREE_INSTANCE_AUTONOMOUS" # TWO_INSTANCE_SEQUENTIAL | THREE_INSTANCE_AUTONOMOUS | CUSTOM
+  monitoring_interval: 30000 # milliseconds
+
+# Define your instances based on project needs
+instances:
+  # Backend/API Instance
+  instance_1:
+    role: "{{BACKEND_ROLE}}" # BACKEND_DEVELOPMENT | API_DEVELOPMENT | SERVICE_DEVELOPMENT
+    specializations:
+      - "{{BACKEND_SPEC_1}}" # Database operations | API endpoints | Service architecture
+      - "{{BACKEND_SPEC_2}}" # Business logic | Data processing | Authentication
+      - "{{BACKEND_SPEC_3}}" # Integration services | Message queues | Caching
+    file_patterns:
+      - "{{BACKEND_PATH_1}}" # src/backend/**/* | src/api/**/* | services/**/*
+      - "{{BACKEND_PATH_2}}" # src/database/**/* | src/models/**/* | src/repositories/**/*
+      - "{{BACKEND_PATH_3}}" # src/services/**/* | src/middleware/**/* | src/utils/**/*
+    verification_scripts:
+      - "{{BACKEND_VERIFICATION}}" # database_schema_verification | api_contract_verification
+
+  # Frontend/UI Instance
+  instance_2:
+    role: "{{FRONTEND_ROLE}}" # FRONTEND_DEVELOPMENT | UI_DEVELOPMENT | CLIENT_DEVELOPMENT
+    specializations:
+      - "{{FRONTEND_SPEC_1}}" # Component development | User interface | Mobile UI
+      - "{{FRONTEND_SPEC_2}}" # State management | User experience | Navigation
+      - "{{FRONTEND_SPEC_3}}" # Client-side logic | Responsive design | Accessibility
+    file_patterns:
+      - "{{FRONTEND_PATH_1}}" # src/frontend/**/* | src/components/**/* | src/ui/**/*
+      - "{{FRONTEND_PATH_2}}" # src/pages/**/* | src/screens/**/* | src/views/**/*
+      - "{{FRONTEND_PATH_3}}" # src/hooks/**/* | src/store/**/* | src/styles/**/*
+    verification_scripts:
+      - "{{FRONTEND_VERIFICATION}}" # component_integration_verification | ui_consistency_verification
+
+  # Coordinator Instance
+  instance_3:
+    role: "INTEGRATION_COORDINATION"
+    specializations:
+      - "Multi-instance coordination"
+      - "{{COORDINATION_SPEC_1}}" # Cache pipeline verification | Message queue verification
+      - "{{COORDINATION_SPEC_2}}" # API contract validation | Component integration testing
+      - "{{COORDINATION_SPEC_3}}" # Performance monitoring | Security scanning
+    file_patterns:
+      - "docs/**/*"
+      - "scripts/verification/**/*"
+      - "status/**/*"
+      - "{{COORDINATION_PATH}}" # tests/integration/**/* | scripts/deployment/**/*
+    verification_scripts:
+      - "integration_verification"
+      - "{{CUSTOM_VERIFICATION}}" # performance_verification | security_verification
+
+# Define your architectural layers for verification
+architectural_layers:
+  layer_1:
+    name: "{{LAYER_1_NAME}}" # data_layer | persistence_layer | storage_layer
+    description: "{{LAYER_1_DESC}}" # Database and data persistence | File system operations
+    verification_script: "{{LAYER_1_SCRIPT}}" # verify_database_layer | verify_storage_layer
+    dependencies: []
+    performance_targets:
+      - metric: "{{LAYER_1_METRIC}}" # query_response_time | storage_latency
+        target: "{{LAYER_1_TARGET}}" # <100ms | <50ms
+
+  layer_2:
+    name: "{{LAYER_2_NAME}}" # service_layer | business_layer | logic_layer
+    description: "{{LAYER_2_DESC}}" # Business logic and services | Core application logic
+    verification_script: "{{LAYER_2_SCRIPT}}" # verify_service_layer | verify_business_logic
+    dependencies: ["{{LAYER_1_NAME}}"]
+    performance_targets:
+      - metric: "{{LAYER_2_METRIC}}" # service_response_time | processing_latency
+        target: "{{LAYER_2_TARGET}}" # <200ms | <100ms
+
+  layer_3:
+    name: "{{LAYER_3_NAME}}" # api_layer | communication_layer | interface_layer
+    description: "{{LAYER_3_DESC}}" # API endpoints and communication | Inter-service communication
+    verification_script: "{{LAYER_3_SCRIPT}}" # verify_api_layer | verify_communication_layer
+    dependencies: ["{{LAYER_2_NAME}}"]
+    performance_targets:
+      - metric: "{{LAYER_3_METRIC}}" # api_response_time | message_latency
+        target: "{{LAYER_3_TARGET}}" # <300ms | <150ms
+
+  layer_4:
+    name: "{{LAYER_4_NAME}}" # presentation_layer | ui_layer | client_layer
+    description: "{{LAYER_4_DESC}}" # User interface and presentation | Client-side rendering
+    verification_script: "{{LAYER_4_SCRIPT}}" # verify_ui_layer | verify_presentation_layer
+    dependencies: ["{{LAYER_3_NAME}}"]
+    performance_targets:
+      - metric: "{{LAYER_4_METRIC}}" # render_time | interaction_latency
+        target: "{{LAYER_4_TARGET}}" # <500ms | <100ms
+
+# Integration points to verify
+integration_points:
+  - type: "{{INTEGRATION_1_TYPE}}" # API_CONTRACTS | IPC_HANDLERS | MESSAGE_QUEUES
+    description: "{{INTEGRATION_1_DESC}}" # API contracts between services | IPC communication channels
+    affected_instances: ["instance_1", "instance_2"]
+    verification_method: "{{INTEGRATION_1_METHOD}}" # contract_testing | message_flow_testing
+
+  - type: "{{INTEGRATION_2_TYPE}}" # CACHE_INVALIDATION | DATA_SYNC | STATE_MANAGEMENT
+    description: "{{INTEGRATION_2_DESC}}" # Cache synchronization | Data consistency | State updates
+    affected_instances: ["instance_1", "instance_2"]
+    verification_method: "{{INTEGRATION_2_METHOD}}" # cache_testing | data_flow_testing
+
+# Autonomous coordination settings
+autonomous_coordination:
+  auto_approval_criteria:
+    - "All verification scripts pass with 0 critical issues"
+    - "Performance benchmarks met or exceeded"
+    - "No integration gaps detected"
+    - "{{CUSTOM_CRITERIA}}" # Test coverage >80% | Security scan passes
+
+  escalation_triggers:
+    - "Critical verification failures"
+    - "Performance regressions >{{PERF_THRESHOLD}}%" # 20% | 10%
+    - "{{CUSTOM_ESCALATION}}" # Security vulnerabilities | Data corruption
+
+  monitoring_targets:
+    handoff_cycle_time: "{{HANDOFF_TARGET}}" # <15 minutes | <30 minutes
+    auto_approval_rate: "{{APPROVAL_TARGET}}" # >95% | >90%
+    integration_failure_rate: "{{FAILURE_TARGET}}" # <5% | <10%
+
+# Project-specific verification requirements
+verification_requirements:
+  critical_tests:
+    - name: "{{CRITICAL_TEST_1}}" # end_to_end_user_flow | data_integrity_test
+      description: "{{CRITICAL_TEST_1_DESC}}" # Complete user workflow | Data consistency check
+      timeout: "{{TEST_1_TIMEOUT}}" # 300s | 120s
+
+    - name: "{{CRITICAL_TEST_2}}" # performance_benchmark | security_scan
+      description: "{{CRITICAL_TEST_2_DESC}}" # Performance regression test | Security vulnerability scan
+      timeout: "{{TEST_2_TIMEOUT}}" # 180s | 600s
+
+  quality_gates:
+    - metric: "{{QUALITY_1}}" # test_coverage | code_quality_score
+      threshold: "{{QUALITY_1_THRESHOLD}}" # >80% | >8.0
+
+    - metric: "{{QUALITY_2}}" # security_score | performance_score
+      threshold: "{{QUALITY_2_THRESHOLD}}" # >9.0 | >85%
+
+# Emergency protocols
+emergency_protocols:
+  instance_failure_detection:
+    timeout: "{{FAILURE_TIMEOUT}}" # 2700000 # 45 minutes
+    recovery_actions:
+      - "{{RECOVERY_ACTION_1}}" # Restart instance coordination | Reassign work to backup instance
+      - "{{RECOVERY_ACTION_2}}" # Notify team lead | Create incident report
+
+  conflict_resolution:
+    priority_order: ["{{PRIORITY_1}}", "{{PRIORITY_2}}", "{{PRIORITY_3}}"] # coordinator | backend | frontend
+    resolution_timeout: "{{RESOLUTION_TIMEOUT}}" # 3600000 # 1 hour
+
+# File and directory patterns (customize for your project structure)
+project_structure:
+  documentation_dir: "{{DOCS_DIR}}" # docs | documentation
+  scripts_dir: "{{SCRIPTS_DIR}}" # scripts | tools
+  verification_dir: "{{VERIFICATION_DIR}}" # scripts/verification | tools/integration
+  status_dir: "{{STATUS_DIR}}" # status | coordination
+  logs_dir: "{{LOGS_DIR}}" # logs | instance-logs

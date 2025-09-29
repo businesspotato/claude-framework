@@ -1,0 +1,211 @@
+# Microservices Multi-Instance Configuration Template
+# For distributed microservices architectures
+
+project_config:
+  name: "{{PROJECT_NAME}}"
+  architecture_type: "microservices"
+  coordination_mode: "FOUR_INSTANCE_AUTONOMOUS"
+  monitoring_interval: 30000
+
+instances:
+  services:
+    role: "MICROSERVICES_DEVELOPMENT"
+    specializations:
+      - "Individual service development"
+      - "Service API design and implementation"
+      - "Inter-service communication"
+      - "Service-specific business logic"
+      - "Service testing and documentation"
+    file_patterns:
+      - "services/**/*"
+      - "src/services/**/*"
+      - "microservices/**/*"
+      - "apis/**/*"
+    verification_scripts:
+      - "service_contract_verification"
+      - "service_health_verification"
+      - "inter_service_communication_verification"
+
+  gateway:
+    role: "API_GATEWAY_DEVELOPMENT"
+    specializations:
+      - "API gateway configuration"
+      - "Request routing and load balancing"
+      - "Authentication and authorization"
+      - "Rate limiting and security"
+      - "Service discovery integration"
+    file_patterns:
+      - "gateway/**/*"
+      - "src/gateway/**/*"
+      - "api-gateway/**/*"
+      - "proxy/**/*"
+      - "auth/**/*"
+    verification_scripts:
+      - "gateway_routing_verification"
+      - "authentication_verification"
+      - "rate_limiting_verification"
+
+  infrastructure:
+    role: "INFRASTRUCTURE_DEVOPS"
+    specializations:
+      - "Container orchestration (Docker/Kubernetes)"
+      - "Service mesh configuration"
+      - "Monitoring and observability"
+      - "CI/CD pipeline management"
+      - "Infrastructure as code"
+    file_patterns:
+      - "infrastructure/**/*"
+      - "k8s/**/*"
+      - "docker/**/*"
+      - "helm/**/*"
+      - "terraform/**/*"
+      - "monitoring/**/*"
+      - ".github/workflows/**/*"
+      - "ci/**/*"
+    verification_scripts:
+      - "infrastructure_verification"
+      - "deployment_verification"
+      - "monitoring_verification"
+
+  coordinator:
+    role: "INTEGRATION_COORDINATION"
+    specializations:
+      - "Cross-service integration testing"
+      - "End-to-end workflow verification"
+      - "Performance and scalability testing"
+      - "Service dependency management"
+      - "System-wide health monitoring"
+    file_patterns:
+      - "docs/**/*"
+      - "scripts/verification/**/*"
+      - "tests/integration/**/*"
+      - "tests/e2e/**/*"
+      - "tests/load/**/*"
+    verification_scripts:
+      - "system_integration_verification"
+      - "cross_service_verification"
+      - "performance_verification"
+
+architectural_layers:
+  data_layer:
+    name: "data_layer"
+    description: "Databases and data stores for each service"
+    verification_script: "verify_data_layer"
+    dependencies: []
+    performance_targets:
+      - metric: "database_response_time"
+        target: "<50ms"
+      - metric: "connection_pool_efficiency"
+        target: ">95%"
+
+  service_layer:
+    name: "service_layer"
+    description: "Individual microservices and their APIs"
+    verification_script: "verify_service_layer"
+    dependencies: ["data_layer"]
+    performance_targets:
+      - metric: "service_response_time"
+        target: "<100ms"
+      - metric: "service_availability"
+        target: ">99.9%"
+
+  communication_layer:
+    name: "communication_layer"
+    description: "Inter-service communication (REST/gRPC/messaging)"
+    verification_script: "verify_communication_layer"
+    dependencies: ["service_layer"]
+    performance_targets:
+      - metric: "message_latency"
+        target: "<20ms"
+      - metric: "message_throughput"
+        target: ">10000/sec"
+
+  gateway_layer:
+    name: "gateway_layer"
+    description: "API gateway and external interface"
+    verification_script: "verify_gateway_layer"
+    dependencies: ["communication_layer"]
+    performance_targets:
+      - metric: "gateway_response_time"
+        target: "<150ms"
+      - metric: "request_routing_accuracy"
+        target: "100%"
+
+  infrastructure_layer:
+    name: "infrastructure_layer"
+    description: "Container orchestration and deployment platform"
+    verification_script: "verify_infrastructure_layer"
+    dependencies: ["gateway_layer"]
+    performance_targets:
+      - metric: "deployment_time"
+        target: "<5min"
+      - metric: "resource_utilization"
+        target: "60-80%"
+
+integration_points:
+  - type: "SERVICE_CONTRACTS"
+    description: "API contracts between microservices"
+    affected_instances: ["services", "gateway"]
+    verification_method: "contract_testing"
+
+  - type: "MESSAGE_QUEUES"
+    description: "Asynchronous messaging between services"
+    affected_instances: ["services", "infrastructure"]
+    verification_method: "message_flow_testing"
+
+  - type: "SERVICE_DISCOVERY"
+    description: "Dynamic service registration and discovery"
+    affected_instances: ["services", "gateway", "infrastructure"]
+    verification_method: "service_discovery_testing"
+
+  - type: "DISTRIBUTED_TRACING"
+    description: "Request tracing across service boundaries"
+    affected_instances: ["services", "gateway", "infrastructure"]
+    verification_method: "tracing_verification"
+
+autonomous_coordination:
+  auto_approval_criteria:
+    - "All service health checks pass"
+    - "Inter-service communication verified"
+    - "API gateway routing functional"
+    - "No circular dependencies detected"
+    - "Performance benchmarks met"
+    - "Security scans pass"
+
+  escalation_triggers:
+    - "Service contract breaking changes"
+    - "Critical service failures"
+    - "Infrastructure deployment failures"
+    - "Performance degradation >30%"
+    - "Security vulnerabilities in communication"
+
+verification_requirements:
+  critical_tests:
+    - name: "cross_service_workflow"
+      description: "Complete business workflow across multiple services"
+      timeout: "300s"
+
+    - name: "service_resilience"
+      description: "Service failure recovery and circuit breaker testing"
+      timeout: "180s"
+
+    - name: "load_balancing"
+      description: "Gateway load balancing and failover"
+      timeout: "120s"
+
+    - name: "data_consistency"
+      description: "Distributed transaction and data consistency"
+      timeout: "240s"
+
+  quality_gates:
+    - metric: "service_test_coverage"
+      threshold: ">85%"
+
+    - metric: "integration_test_coverage"
+      threshold: ">75%"
+
+    - metric: "system_availability"
+      threshold: ">99.9%"
+
+    - metric: "mean_time_to_recovery"
+      threshold: "<5min"
