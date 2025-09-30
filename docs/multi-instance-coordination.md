@@ -43,9 +43,11 @@ Safe coordination patterns for running multiple Claude Code instances with seque
 - **User Mediation**: User coordinates transitions between active instances
 - **Verification**: Instance 3 runs integration tests before handoff approval
 - **Application Control**: Only Instance 3 manages npm start/stop/restart
+- **Accountability**: Progressive consequences for false claims or evidence refusal
 
 **Monitoring Protocol**: 3-minute check-ins (Instance 1 & 2) and 1-minute orchestration (Instance 3) with mutual understanding acknowledgment and completion monitoring
 **Safety Override**: Manual control available via `manualOverride: true` flag
+**Accountability Framework**: See `docs/multi-instance-coordination/instance-accountability-framework.md`
 **Documentation**: See `docs/multi-instance-coordination/automated-handoff-protocol.md`
 
 ### Safety Principles
