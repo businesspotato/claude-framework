@@ -2,6 +2,36 @@
 
 **Claude Framework** multi-agent development patterns, specialized subagent configurations, and coordination protocols.
 
+## Development Modes Overview
+
+This framework supports **two distinct development modes**:
+
+### 🔄 Multi-Instance Collaborative Mode (Recommended)
+**Three Claude instances** working collaboratively with Zen MCP integration:
+- **Instance 1**: Backend/Database Specialist
+- **Instance 2**: Frontend/UI Developer
+- **Instance 3**: Senior Architect & Orchestrator
+
+**Key Features**:
+- All instances have access to **all 16 subagents**
+- Zen MCP-powered collaborative brainstorming
+- Joint planning with dynamic idea exchange
+- Parallel development with continuous integration
+- Full workflow capabilities per instance (Planning → Development → Debugging → Verification)
+
+**See**: `claude-framework/docs/multi-instance-coordination.md` for complete collaborative workflow documentation.
+
+### ⚡ Multi-Agent Parallel Mode (Advanced)
+**Multiple Claude instances** in separate terminals using git worktrees:
+- 6+ parallel agents with territory-based development
+- Independent git branches per agent
+- High-velocity parallel execution
+- Requires careful file territory management
+
+**Detailed below** in this document.
+
+---
+
 ## Available Subagents (16 Total)
 
 Located in `claude-framework/.claude/agents/` directory. Each subagent has specialized expertise and can be invoked using the Task tool.
@@ -93,6 +123,139 @@ Located in `claude-framework/.claude/agents/` directory. Each subagent has speci
 - **Purpose**: Coordinates multi-agent workflows
 - **Expertise**: Parallel execution, task distribution, agent coordination
 - **Use Cases**: Complex multi-step tasks, parallel development, workflow orchestration
+
+## Subagent Access Policy
+
+**IMPORTANT**: In **Multi-Instance Collaborative Mode**, all instances have access to all 16 subagents:
+
+- ✅ **Instance 1 (Backend)**: Has ALL 16 subagents for complete workflow
+- ✅ **Instance 2 (Frontend)**: Has ALL 16 subagents for complete workflow
+- ✅ **Instance 3 (Orchestrator)**: Has ALL 16 subagents for complete workflow
+
+**Workflow Phases Per Instance**:
+1. **Planning**: backend-designer, api-designer, database-admin, jenny
+2. **Development**: [domain-specific agents], ui-comprehensive-tester, code-quality-pragmatist
+3. **Debugging**: ultrathink-debugger, code-reviewer
+4. **Verification**: task-completion-validator, karen, jenny
+
+Each instance can execute the full development cycle within their domain specialization.
+
+## Zen MCP Integration (Multi-Instance Mode)
+
+**Zen MCP** provides advanced reasoning and collaborative planning for multi-instance coordination.
+
+### Available Zen MCP Functions
+
+#### mcp__zen__planner
+**Purpose**: Multi-step planning with revision capability
+**Use Cases**: Feature planning, architecture design, complex workflows
+
+```typescript
+// Instance 3 initiates collaborative planning
+mcp__zen__planner({
+  step: "Plan eBay API integration. Instance 1: What backend services are needed? Instance 2: What frontend components are needed?",
+  step_number: 1,
+  total_steps: 5,
+  next_step_required: true,
+  model: "o3" // or "o3-mini", "gpt-5", "gpt-5-mini"
+})
+```
+
+#### mcp__zen__consensus
+**Purpose**: Multi-model debate for architectural decisions
+**Use Cases**: Architecture choices, design pattern selection, technology decisions
+
+```typescript
+// Evaluate architecture options with multi-perspective analysis
+mcp__zen__consensus({
+  step: "Should we use unified pricing table or separate API sources?",
+  models: [
+    { model: "o3", stance: "for" },
+    { model: "o3", stance: "against" }
+  ]
+})
+```
+
+#### mcp__zen__thinkdeep
+**Purpose**: Deep investigation and complex analysis
+**Use Cases**: Performance optimization, algorithmic challenges, scalability planning
+
+```typescript
+// Deep dive into complex problem
+mcp__zen__thinkdeep({
+  step: "Analyze cache synchronization failures across 6-layer pipeline",
+  model: "o3"
+})
+```
+
+#### mcp__zen__debug
+**Purpose**: Systematic root cause analysis
+**Use Cases**: Production issues, integration failures, mysterious bugs
+
+```typescript
+// Systematic debugging approach
+mcp__zen__debug({
+  step: "Debug why Sanji OP12-041 shows $0.38 instead of $22.50 in UI",
+  model: "o3-mini"
+})
+```
+
+#### mcp__zen__chat
+**Purpose**: Interactive reasoning and brainstorming
+**Use Cases**: Complex problem exploration, iterative refinement
+
+```typescript
+// Interactive problem solving
+mcp__zen__chat({
+  message: "How should we structure variant pricing data model to support alternate art, parallel cards, and tournament promo variants?",
+  model: "o3-mini"
+})
+```
+
+### Zen MCP Model Selection
+
+**Basic Thinking Models** (Recommended for most tasks):
+- `o3-mini`: Fast, efficient, cost-effective
+- `gpt-5-mini`: Alternative basic model
+
+**Advanced Models** (For complex problems):
+- `o3`: More sophisticated reasoning
+- `gpt-5`: Alternative advanced model
+- `o3-pro`: Maximum capability (expensive)
+
+**Trigger Conditions** (Auto-activate Zen MCP for):
+- Multi-service integration complexity
+- Performance requirements >1000 ops/sec
+- Algorithmic challenges
+- Scalability planning requiring deep analysis
+- Complex debugging scenarios
+
+### Collaborative Brainstorming Pattern
+
+**Instance 3-Led Planning Session**:
+```typescript
+// Step 1: Instance 3 introduces problem
+mcp__zen__planner({
+  step: "Feature: Add variant pricing support. Instance 1, what database schema changes are needed? Instance 2, what UI changes are needed?",
+  step_number: 1
+})
+
+// Step 2: Instance 1 provides technical constraints
+// (Instance 1 responds with backend analysis)
+
+// Step 3: Instance 2 provides UX requirements
+// (Instance 2 responds with frontend needs)
+
+// Step 4: Zen MCP synthesizes solution
+mcp__zen__consensus({
+  step: "Given backend constraints and frontend needs, what's the optimal variant pricing architecture?"
+})
+
+// Step 5: Document decision
+// Update docs/architecture/ with rationale and implementation plan
+```
+
+**See**: `docs/collaborative-instance-workflow.md` for complete Zen MCP workflow patterns.
 
 ## Multi-Agent Tree Architecture
 
@@ -382,30 +545,99 @@ Task({
   prompt: "Review the recent API integration for security and best practices"
 })
 
-// Example: Launch multiple agents in parallel
+// Example: Launch multiple subagents in parallel
 // Send single message with multiple Task tool calls
 Task({ subagent_type: "api-designer", ... })
 Task({ subagent_type: "backend-designer", ... })
 Task({ subagent_type: "database-admin", ... })
 ```
 
-### Common Multi-Agent Workflows
+### Multi-Instance Collaborative Subagent Usage
 
-#### 1. Feature Implementation (Parallel)
+**All instances have access to all 16 subagents** for complete workflow execution:
+
+```typescript
+// Instance 1 (Backend) - Full workflow capability
+// Planning Phase
+Task({ subagent_type: "backend-designer", prompt: "Design pricing service architecture" })
+Task({ subagent_type: "database-admin", prompt: "Design variant pricing schema" })
+
+// Development Phase
+Task({ subagent_type: "electron-pro", prompt: "Implement IPC handlers for pricing" })
+
+// Debugging Phase
+Task({ subagent_type: "ultrathink-debugger", prompt: "Debug cache synchronization issue" })
+
+// Verification Phase
+Task({ subagent_type: "karen", prompt: "Verify pricing integration actually works" })
+```
+
+```typescript
+// Instance 2 (Frontend) - Full workflow capability
+// Planning Phase
+Task({ subagent_type: "api-designer", prompt: "Design frontend pricing API contracts" })
+
+// Development Phase
+Task({ subagent_type: "ui-comprehensive-tester", prompt: "Write E2E tests for variant selector" })
+
+// Debugging Phase
+Task({ subagent_type: "code-reviewer", prompt: "Review component security and performance" })
+
+// Verification Phase
+Task({ subagent_type: "jenny", prompt: "Verify UI matches design specifications" })
+```
+
+```typescript
+// Instance 3 (Orchestrator) - Coordination + Full workflow
+// Orchestration
+Task({ subagent_type: "multiagent-organizer", prompt: "Coordinate instance handoffs" })
+
+// Planning with Zen MCP
+mcp__zen__planner({ step: "Joint planning session for all instances" })
+
+// Verification
+Task({ subagent_type: "task-completion-validator", prompt: "Validate integration completeness" })
+Task({ subagent_type: "karen", prompt: "Reality check on claimed completion" })
+```
+
+### Common Subagent Workflows
+
+#### 1. Feature Implementation (Multi-Instance Collaborative)
+**Instance 3 coordinates via Zen MCP**:
+- mcp__zen__planner: Joint planning session
+- All instances brainstorm requirements
+
+**Instance 1 (Backend)**:
 - api-designer: Design API contracts
 - backend-designer: Design service architecture
 - database-admin: Design data models
-- All work in parallel, then integrate
 
-#### 2. Debugging Complex Issues
+**Instance 2 (Frontend)**:
+- api-designer: Design frontend contracts
+- electron-pro: Design component architecture
+- ui-comprehensive-tester: Plan test strategy
+
+**Instance 3 (Integration)**:
+- task-completion-validator: Verify implementation completeness
+- karen: Reality check on integration
+
+#### 2. Debugging Complex Issues (All Instances)
+**Any instance can use debugging workflow**:
 - ultrathink-debugger: Root cause analysis
 - code-reviewer: Identify code issues
 - task-completion-validator: Verify fixes
 
-#### 3. Project Audit
+#### 3. Project Audit (Instance 3-Led)
 - karen: Realistic assessment
 - jenny: Spec compliance check
 - claude-md-compliance-checker: Standards verification
+
+#### 4. Multi-Agent Parallel Mode (Advanced)
+**Launch parallel agents in separate terminals**:
+- api-designer: Design API contracts (Agent 1)
+- backend-designer: Design services (Agent 2)
+- database-admin: Design data models (Agent 3)
+- All work simultaneously, then integrate
 
 ## Multi-Agent Startup Protocol
 
@@ -452,6 +684,17 @@ watch -n 5 'cat status/status.json | jq .'
 
 ## Best Practices
 
+### Multi-Instance Collaborative Mode
+1. **All instances have full subagent access** - Use complete workflow (Planning → Development → Debugging → Verification)
+2. **Zen MCP for joint planning** - Use mcp__zen__planner for collaborative brainstorming
+3. **Continuous integration** - Instance 3 monitors integration throughout development
+4. **Active acknowledgment** - Acknowledge other instances' work immediately
+5. **Cache/IPC synchronization** - Verify data flow across all 6 layers
+6. **Status updates every 30 minutes** - Use automation hooks and slash commands
+7. **Test before handoff** - Verify functionality with actual IPC calls
+8. **Document in shared docs** - Use docs/collaborative-instance-workflow.md patterns
+
+### Multi-Agent Parallel Mode
 1. **Always use parallel agents** when tasks are independent
 2. **Define clear territories** to avoid conflicts
 3. **Use status broadcasting** for coordination
@@ -463,8 +706,48 @@ watch -n 5 'cat status/status.json | jq .'
 9. **Communicate through status files** for coordination
 10. **Test cross-agent integrations** before marking features complete
 
+## Choosing the Right Mode
+
+### Use Multi-Instance Collaborative Mode When:
+✅ Working on complex features requiring backend + frontend + integration
+✅ Need continuous integration verification throughout development
+✅ Want collaborative brainstorming with Zen MCP
+✅ Have 3 terminal windows available
+✅ Need full workflow capabilities per domain
+✅ Want automated validation (hooks/commands)
+
+**Recommended for**: Most development work, complex features, integrated systems
+
+### Use Multi-Agent Parallel Mode When:
+✅ Have 6+ independent tasks with clear territories
+✅ Need maximum velocity for feature development sprints
+✅ Each agent can work 90%+ independently
+✅ Have git worktree management experience
+✅ Need to parallelize across multiple git branches
+
+**Recommended for**: Large feature sprints, massive refactors, independent module development
+
+### Quick Reference
+
+| Feature | Multi-Instance Collaborative | Multi-Agent Parallel |
+|---------|----------------------------|---------------------|
+| **Instances** | 3 (coordinated) | 6+ (independent) |
+| **Subagent Access** | All 16 per instance | All 16 per agent |
+| **Zen MCP** | ✅ Integrated | ❌ Not typically used |
+| **Git Strategy** | Single branch | Multiple worktrees |
+| **Integration** | Continuous (Instance 3) | End-of-sprint |
+| **Complexity** | Medium | High |
+| **Velocity** | High (with coordination) | Very High (if independent) |
+| **Setup Time** | 5 minutes | 15-20 minutes |
+
+**See Documentation**:
+- Multi-Instance: `claude-framework/docs/multi-instance-coordination.md`
+- Collaborative Workflow: `docs/collaborative-instance-workflow.md`
+- Cache/IPC Guide: `docs/cache-ipc-synchronization-guide.md`
+- Automation: `.claude/hooks/` and `.claude/commands/`
+
 ---
 
-**Version 4.0.0 - Consolidated Multi-Agent Framework**
+**Version 5.0.0 - Multi-Instance Collaborative Framework**
 
-*This comprehensive guide covers both individual subagent usage and advanced multi-agent coordination protocols for Claude Framework projects.*
+*This comprehensive guide covers individual subagent usage, Multi-Instance Collaborative Mode with Zen MCP integration, and advanced Multi-Agent Parallel Mode for Claude Framework projects.*

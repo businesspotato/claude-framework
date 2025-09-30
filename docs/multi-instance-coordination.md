@@ -19,36 +19,65 @@ Safe coordination patterns for running multiple Claude Code instances with seque
 ### Full Service Consolidation Required ⚠️
 **CRITICAL DISCOVERY**: 25+ legacy `collectionService` usages identified across 13 files requiring systematic consolidation to prevent future data inconsistency incidents.
 
-## Current Approach: Three-Instance Sequential Coordination
+## Current Approach: Three-Instance Collaborative Coordination
 
 ### Core Philosophy
-- **Three specialized instances with user-mediated sequential handoffs**
-- **ONE instance ACTIVE at a time - others in STANDBY**
-- **Instance 3 manages application lifecycle and orchestration**
-- **File-based status monitoring with user-coordinated transitions**
-- **Comprehensive verification at each handoff with failure remediation**
+- **Three specialized instances with Zen MCP-powered collaboration**
+- **Collaborative brainstorming during planning phases - ALL instances contribute**
+- **Parallel development with active coordination during implementation**
+- **Instance 3 as Senior Architect coordinating via Zen MCP**
+- **ALL instances have access to ALL 16 subagents for complete workflows**
+- **File-based status monitoring with continuous integration checks**
+- **Comprehensive cache/IPC verification at integration points**
 - **EMERGENCY PROTOCOL**: Immediate coordination for data consistency issues
 
-### 🔄 SEQUENTIAL COORDINATION PATTERN
-**User-Mediated Handoffs**: Instances work sequentially with user coordination between transitions.
+### New Features (Version 2.0)
+- ✅ **Collaborative Workflow**: Replaced sequential handoffs with dynamic brainstorming
+- ✅ **Zen MCP Integration**: `mcp__zen__planner`, `mcp__zen__consensus`, `mcp__zen__thinkdeep` for multi-instance coordination
+- ✅ **Automation Hooks**: Pre-commit TDD, cache validation, IPC contract checks
+- ✅ **Slash Commands**: `/cache-health-check`, `/ipc-registry`, `/zen-brainstorm`, `/data-flow-trace`
+- ✅ **Full Subagent Access**: All instances use complete Planning → Development → Debugging → Verification workflow
 
-**Sequential Flow**:
-- **Instance 1 ACTIVE** → Backend/Database work → Requests handoff → **STANDBY**
-- **User verifies** → Instance 3 validates → User activates Instance 2
-- **Instance 2 ACTIVE** → Frontend/UI work → Requests handoff → **STANDBY**
-- **User verifies** → Instance 3 validates → Integration complete
+See: `docs/collaborative-instance-workflow.md` for detailed collaborative patterns
+
+### 🔄 COLLABORATIVE COORDINATION PATTERN
+**Zen MCP-Powered Brainstorming**: Instances collaborate during planning, develop in parallel, integrate continuously.
+
+**Collaborative Flow**:
+1. **Joint Planning (All Instances)**:
+   - Instance 3 initiates via `mcp__zen__planner`
+   - Instance 1 contributes backend perspective
+   - Instance 2 contributes frontend perspective
+   - Zen MCP synthesizes multi-perspective solution
+
+2. **Parallel Development (Instance 1 & 2 ACTIVE)**:
+   - Both develop simultaneously in their domains
+   - Active coordination via status updates (every 30 min)
+   - Ad-hoc Zen brainstorming when blockers arise
+   - File locking for critical shared files
+
+3. **Continuous Integration (Instance 3 Monitors)**:
+   - Instance 3 manages application lifecycle
+   - Integration tests at milestones
+   - Collaborative debugging via `mcp__zen__debug`
+   - Approval when all layers verified
 
 **Key Coordination Features**:
-- **Status Monitoring**: Instance 3 monitors status file for handoff requests
-- **User Mediation**: User coordinates transitions between active instances
-- **Verification**: Instance 3 runs integration tests before handoff approval
-- **Application Control**: Only Instance 3 manages npm start/stop/restart
-- **Accountability**: Progressive consequences for false claims or evidence refusal
+- **Zen MCP Hub**: Structured brainstorming and consensus-building
+- **Parallel Development**: Instances work simultaneously with coordination
+- **Active Communication**: Bidirectional idea exchange throughout development
+- **Automation Hooks**: Pre-commit validation ensures quality
+- **Cache/IPC Verification**: Complete data pipeline testing at integration points
 
-**Monitoring Protocol**: 3-minute check-ins (Instance 1 & 2) and 1-minute orchestration (Instance 3) with mutual understanding acknowledgment and completion monitoring
-**Safety Override**: Manual control available via `manualOverride: true` flag
-**Accountability Framework**: See `docs/multi-instance-coordination/instance-accountability-framework.md`
-**Documentation**: See `docs/multi-instance-coordination/automated-handoff-protocol.md`
+**Monitoring Protocol**: 30-minute status updates, continuous integration checks, automated pre-commit validation
+**Automation Tools**:
+- **Hooks**: `.claude/hooks/` (pre-commit-tdd.sh, cache-validation.sh, ipc-contract-validation.sh, instance-status-check.sh, data-layer-verification.sh)
+- **Commands**: `.claude/commands/` (multi-instance-status.json, cache-health-check.json, ipc-registry.json, zen-brainstorm.json, file-lock-status.json, data-flow-trace.json)
+
+**Key Documentation**:
+- `docs/collaborative-instance-workflow.md` - Collaborative patterns and Zen MCP integration
+- `docs/cache-ipc-synchronization-guide.md` - Complete data pipeline verification protocols
+- `claude-framework/docs/multiagent.md` - Subagent orchestration patterns
 
 ### Safety Principles
 
