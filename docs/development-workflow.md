@@ -399,6 +399,252 @@ interface TDDStatusUpdate {
 - **Database Layer Agent** writes data persistence tests before implementing schemas
 - **Testing Suite Agent** writes cross-agent workflow tests before integration points are built
 
+## Parallel Development with Git Worktrees
+
+### Overview
+
+Git worktrees enable **parallel development** by creating separate working directories for different branches. This allows multiple Claude Code instances or developers to work simultaneously on independent tasks without conflicts.
+
+### When to Use Parallel Development
+
+**Ideal Scenarios:**
+- Multiple independent tasks that don't share code paths
+- Long-running features that shouldn't block quick fixes
+- Cleanup/refactoring work alongside feature development
+- Testing different implementation approaches simultaneously
+
+**Not Recommended:**
+- Highly interdependent tasks requiring constant integration
+- When disk space is limited (worktrees duplicate working files)
+- Tasks that modify the same files frequently
+
+### Setting Up Parallel Worktrees
+
+**Create Task-Based Worktrees:**
+```bash
+# From main development directory
+cd ~/Projects/your-project
+
+# Create worktrees for different task categories
+git worktree add -b cleanup/codebase-organization ../project-cleanup
+git worktree add -b fix/critical-bugs ../project-bugfix
+git worktree add -b feature/new-system ../project-features
+
+# Verify worktrees
+git worktree list
+```
+
+**Task Categorization Strategy:**
+
+| Category | Branch Prefix | Risk Level | Priority | Example |
+|----------|---------------|------------|----------|---------|
+| Cleanup | `cleanup/` | Low | High | File organization, documentation |
+| Bug Fixes | `fix/` | Low-Medium | High | Critical fixes, performance improvements |
+| Database | `feature/db-*` | High | Medium | Schema changes, migrations |
+| Features | `feature/` | Medium | Low | New functionality, integrations |
+
+### Workflow Patterns
+
+**Sequential Workflow (Single Instance):**
+```bash
+# Instance works through worktrees one at a time
+cd ../project-cleanup
+# Complete cleanup tasks
+git add . && git commit -m "cleanup: organize test files"
+
+cd ../project-bugfix
+# Fix bugs
+git add . && git commit -m "fix: resolve variant pricing issue"
+
+cd ../project-features
+# Implement features
+git add . && git commit -m "feat: add cache monitoring"
+```
+
+**Parallel Workflow (Multiple Instances):**
+```bash
+# Terminal 1: Main development (Instance 1)
+cd ~/Projects/your-project
+npm start  # Active development
+
+# Terminal 2: Cleanup work (Instance 2)
+cd ~/Projects/project-cleanup
+# File organization and documentation
+
+# Terminal 3: Feature development (Instance 3)
+cd ~/Projects/project-features
+# New feature implementation
+```
+
+### Coordination Between Worktrees
+
+**Status Tracking:**
+```bash
+# Create status file in each worktree
+cd ../project-cleanup
+cat > .worktree-status << 'EOF'
+INSTANCE: Claude Secondary
+TASK: Organizing test scripts
+STATUS: in_progress
+FILES_MODIFIED: 42
+ETA_MINUTES: 30
+EOF
+
+# Check all worktree statuses
+for worktree in ../project-*; do
+  [ -f "$worktree/.worktree-status" ] && cat "$worktree/.worktree-status"
+done
+```
+
+**Centralized Coordination:**
+```json
+// status/worktree-coordination.json
+{
+  "active_worktrees": ["cleanup", "features"],
+  "worktrees": {
+    "cleanup": {
+      "branch": "cleanup/codebase-organization",
+      "status": "in_progress",
+      "instance": "Claude Secondary",
+      "eta_minutes": 30
+    },
+    "bugfix": {
+      "branch": "fix/critical-bugs",
+      "status": "completed",
+      "instance": "Claude Secondary"
+    },
+    "features": {
+      "branch": "feature/new-system",
+      "status": "in_progress",
+      "instance": "Claude Tertiary",
+      "eta_minutes": 120
+    }
+  }
+}
+```
+
+### Integration Strategy
+
+**Sequential Integration (Recommended):**
+```bash
+# Merge worktrees in order of risk and completion
+cd ~/Projects/your-project
+
+# 1. Low-risk cleanup (merge immediately)
+git merge cleanup/codebase-organization
+git push origin cleanup/codebase-organization
+
+# 2. Bug fixes (test and merge)
+git merge fix/critical-bugs
+npm test  # Verify tests pass
+git push origin fix/critical-bugs
+
+# 3. Features (comprehensive testing)
+git merge feature/new-system
+npm test  # Full test suite
+git push origin feature/new-system
+```
+
+**Parallel Integration (Advanced):**
+```bash
+# Create integration branch for testing combined changes
+git checkout -b integration/all-improvements
+git merge cleanup/codebase-organization
+git merge fix/critical-bugs
+git merge feature/new-system
+
+# Comprehensive testing
+npm test
+npm run lint
+npm run build
+
+# If successful, merge to main
+git checkout main
+git merge integration/all-improvements
+```
+
+### TDD Workflow in Parallel Development
+
+**Each Worktree Maintains TDD Discipline:**
+
+```bash
+# In cleanup worktree
+cd ../project-cleanup
+# No tests needed for file organization
+git add scripts/
+git commit -m "cleanup: organize test scripts into categories"
+
+# In bugfix worktree
+cd ../project-bugfix
+# Write test first
+npm test -- --testPathPattern="variant-pricing.test.ts"  # Fails
+# Fix the bug
+npm test -- --testPathPattern="variant-pricing.test.ts"  # Passes
+git add src/
+git commit -m "fix: resolve variant pricing cache issue"
+
+# In features worktree
+cd ../project-features
+# Write tests for new feature
+npm test -- --testPathPattern="cache-monitor.test.ts"  # Fails
+# Implement feature
+npm test -- --testPathPattern="cache-monitor.test.ts"  # Passes
+git add src/
+git commit -m "feat: implement cache monitoring dashboard"
+```
+
+### Cleanup After Integration
+
+**Remove Worktrees:**
+```bash
+# After successful merge
+git worktree remove ../project-cleanup
+git worktree remove ../project-bugfix
+git worktree remove ../project-features
+
+# Prune stale worktree references
+git worktree prune
+
+# Delete merged branches (optional)
+git branch -d cleanup/codebase-organization
+git branch -d fix/critical-bugs
+git branch -d feature/new-system
+```
+
+### Best Practices
+
+1. **Keep Worktrees Focused**: One worktree = one purpose (cleanup, bugfix, feature)
+2. **Commit Often**: Small, focused commits make integration easier
+3. **Test in Isolation**: Run tests in each worktree before merging
+4. **Sync Regularly**: Pull main branch changes into worktrees to avoid conflicts
+5. **Document Changes**: Use clear commit messages and status updates
+6. **Merge Sequentially**: Merge low-risk changes first, features last
+
+### Advantages
+
+✅ **Complete Isolation**: No conflicts between parallel tasks
+✅ **Safe Experimentation**: Test approaches without affecting main branch
+✅ **Faster Context Switching**: Navigate between worktrees instead of branch switching
+✅ **Independent Testing**: Run tests in parallel across worktrees
+✅ **Clear Separation**: Each worktree has dedicated purpose
+
+### Disadvantages
+
+❌ **Disk Space**: Worktrees duplicate working files
+❌ **Complexity**: More directories to manage
+❌ **Sync Overhead**: Need to keep worktrees updated with main changes
+❌ **Merge Conflicts**: Possible when tasks overlap unexpectedly
+
+### Complete Documentation
+
+See `claude-framework/docs/git-worktree-workflow.md` for:
+- Detailed worktree commands and troubleshooting
+- Multi-instance coordination strategies
+- Advanced merge techniques
+- Terminal setup for parallel development
+
+---
+
 ## Metrics and Monitoring
 
 ### Performance Metrics

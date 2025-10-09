@@ -1277,6 +1277,197 @@ echo "Urgency: NORMAL" >> status/restart-request.txt
 
 ---
 
+## 🌳 Git Worktree Strategy for Instance Isolation
+
+### Overview
+
+Git worktrees provide **complete isolation** between Claude Code instances by creating separate working directories for different branches. This is the **recommended approach** for parallel development when:
+- Multiple instances need to work simultaneously without conflicts
+- Tasks are independent and can be developed in isolation
+- You want to avoid constant branch switching in a single directory
+
+### When to Use Worktrees vs Single Branch
+
+**Use Worktrees When:**
+- ✅ Running multiple Claude Code instances on different tasks
+- ✅ Tasks are completely independent (cleanup vs features)
+- ✅ Long-running features that shouldn't block quick fixes
+- ✅ Need to test different approaches simultaneously
+- ✅ Want to avoid merge conflicts during development
+
+**Use Single Branch When:**
+- ❌ Working sequentially on interdependent tasks
+- ❌ Tasks need constant integration
+- ❌ Only one instance active at a time
+- ❌ Disk space is critical (worktrees duplicate working files)
+
+### Setup Worktrees for Multi-Instance Work
+
+**Basic Worktree Creation:**
+```bash
+# From main development directory
+cd ~/Projects/OP\ TCG/one-piece-tcg-manager
+
+# Create worktree for cleanup work
+git worktree add -b cleanup/codebase-organization ../optcg-cleanup
+
+# Create worktree for bugfixes
+git worktree add -b fix/variant-pricing-mismatch ../optcg-bugfix
+
+# Create worktree for database work
+git worktree add -b feature/database-optimization ../optcg-database
+
+# Create worktree for features
+git worktree add -b feature/cache-and-price-tracking ../optcg-features
+```
+
+**Verify Worktrees:**
+```bash
+git worktree list
+
+# Output:
+# /path/to/one-piece-tcg-manager    [dangerous_dev]
+# /path/to/optcg-cleanup             [cleanup/codebase-organization]
+# /path/to/optcg-bugfix              [fix/variant-pricing-mismatch]
+# /path/to/optcg-database            [feature/database-optimization]
+# /path/to/optcg-features            [feature/cache-and-price-tracking]
+```
+
+### Instance Assignment to Worktrees
+
+**Recommended Pattern:**
+
+| Instance | Worktree | Branch | Tasks |
+|----------|----------|--------|-------|
+| **Primary** (You) | `one-piece-tcg-manager/` | `dangerous_dev` | Active development, user-driven tasks |
+| **Secondary** (Claude) | `../optcg-cleanup/` | `cleanup/codebase-organization` | File organization, documentation |
+| **Secondary** (Claude) | `../optcg-bugfix/` | `fix/variant-pricing-mismatch` | Quick bug fixes |
+| **Secondary** (Claude) | `../optcg-database/` | `feature/database-optimization` | Schema changes |
+| **Secondary** (Claude) | `../optcg-features/` | `feature/cache-and-price-tracking` | New features |
+
+**Workflow:**
+1. **Primary instance** stays in main directory (`dangerous_dev`)
+2. **Secondary instance** works through worktrees sequentially:
+   - Start in `../optcg-cleanup` → complete cleanup → commit
+   - Move to `../optcg-bugfix` → fix bugs → commit
+   - Move to `../optcg-database` → optimize database → commit
+   - Move to `../optcg-features` → implement features → commit
+
+### Coordination Between Worktrees
+
+**Status Tracking:**
+```bash
+# Each worktree maintains its own status
+cd ../optcg-cleanup
+cat > .worktree-status << 'EOF'
+STATUS: Cleanup in progress
+INSTANCE: Claude Instance 2
+TASK: Organizing test files
+ETA: 30 minutes
+EOF
+
+# Check all worktree statuses
+for worktree in ../optcg-*; do
+  if [ -f "$worktree/.worktree-status" ]; then
+    echo "=== $(basename $worktree) ==="
+    cat "$worktree/.worktree-status"
+  fi
+done
+```
+
+**Centralized Coordination File:**
+```json
+// status/worktree-coordination.json
+{
+  "active_worktree": "cleanup/codebase-organization",
+  "worktrees": {
+    "cleanup": {
+      "branch": "cleanup/codebase-organization",
+      "status": "in_progress",
+      "instance": "Claude Secondary",
+      "files_modified": 122,
+      "eta_minutes": 30
+    },
+    "bugfix": {
+      "branch": "fix/variant-pricing-mismatch",
+      "status": "pending",
+      "instance": null,
+      "eta_minutes": 45
+    }
+  }
+}
+```
+
+### Merge Strategy for Worktree Branches
+
+**Sequential Merge (Recommended):**
+```bash
+# From main directory
+cd ~/Projects/OP\ TCG/one-piece-tcg-manager
+
+# Merge in order of completion and risk
+git merge cleanup/codebase-organization   # Low risk, immediate benefit
+git push origin cleanup/codebase-organization
+
+git merge fix/variant-pricing-mismatch    # Quick win
+git push origin fix/variant-pricing-mismatch
+
+git merge feature/database-optimization   # Review carefully
+git push origin feature/database-optimization
+
+git merge feature/cache-and-price-tracking  # Comprehensive testing
+git push origin feature/cache-and-price-tracking
+```
+
+### Cleanup After Merge
+
+**Remove Worktrees:**
+```bash
+# Remove individual worktree
+git worktree remove ../optcg-cleanup
+
+# Remove all worktrees
+git worktree remove ../optcg-cleanup
+git worktree remove ../optcg-bugfix
+git worktree remove ../optcg-database
+git worktree remove ../optcg-features
+
+# Prune stale references
+git worktree prune
+
+# Delete merged branches (optional)
+git branch -d cleanup/codebase-organization
+git branch -d fix/variant-pricing-mismatch
+git branch -d feature/database-optimization
+git branch -d feature/cache-and-price-tracking
+```
+
+### Advantages of Worktree Approach
+
+✅ **Complete Isolation**: No conflicts between instances
+✅ **Parallel Development**: Work on multiple tasks simultaneously
+✅ **Safe Experimentation**: Test changes without affecting main branch
+✅ **Easy Context Switching**: Navigate between worktrees in different terminals
+✅ **Independent npm/dependencies**: Each worktree has its own node_modules
+✅ **Clean Merge History**: Clear separation of features in git log
+
+### Disadvantages to Consider
+
+❌ **Disk Space**: Worktrees duplicate working files (~500MB each for this project)
+❌ **Complexity**: More directories to manage
+❌ **Sync Overhead**: Need to keep worktrees updated with main branch changes
+
+### Complete Documentation
+
+See `claude-framework/docs/git-worktree-workflow.md` for:
+- Detailed worktree commands and troubleshooting
+- Branch naming conventions
+- Conflict resolution strategies
+- Terminal setup for multi-worktree development
+- Advanced coordination patterns
+
+---
+
 ## 📋 Sequential Workflow Examples
 
 ### Example 1: Feature Implementation with Sequential Handoffs
