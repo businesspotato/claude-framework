@@ -8,6 +8,14 @@ Claude Framework provides advanced development capabilities including autonomous
 
 ## 🚀 Key Features
 
+### Optimized Documentation Structure (⭐ NEW)
+- **Lean CLAUDE.md Template**: ~350 lines vs 10,000+ lines (97% reduction)
+- **Architecture-Agnostic**: Conditional variables for IPC/REST/GraphQL, npm/yarn/cargo, Webpack/Vite, etc.
+- **Reference-Based Architecture**: Central CLAUDE.md references comprehensive guides
+- **Progressive Disclosure**: Quick reference → detailed documentation when needed
+- **Token Optimization**: Reduced context usage through staged MCP queries
+- **Performance Tracking**: SQLite-based benchmark system with budget enforcement
+
 ### Autonomous Multi-Instance Coordination
 - **3+ Instance Coordination**: Backend, Frontend, Infrastructure, and Coordinator instances
 - **Autonomous Handoffs**: Automatic verification and approval without manual intervention
@@ -40,7 +48,18 @@ claude-framework/
 │   ├── autonomous-multi-instance-framework.md    # Complete framework guide
 │   ├── asynchronous-handoff-protocols.md        # Handoff automation
 │   ├── multi-instance-coordination.md           # Instance coordination
-│   └── multiagent.md                           # Subagent orchestration
+│   ├── multiagent.md                           # Subagent orchestration
+│   ├── development-workflow.md                 # TDD integration
+│   ├── cache-ipc-verification.md               # Layer synchronization
+│   ├── mcp-usage-guide.md                      # MCP integration
+│   ├── mcp-best-practices.md                   # MCP patterns
+│   ├── api-patterns.md                         # API design patterns
+│   ├── git-worktree-workflow.md                # Git worktree patterns
+│   ├── output-style-setup.md                   # Communication style
+│   ├── mcp-query-optimization.md               # ⭐ NEW: Context reduction strategies
+│   ├── subagent-guide.md                       # ⭐ NEW: Complete subagent reference
+│   ├── planning-enforcement.md                 # ⭐ NEW: Planning workflow compliance
+│   └── planning-template.md                    # ⭐ NEW: 7-step planning format
 ├── templates/                              # Project setup templates
 │   ├── quick-setup-guide.md               # Getting started guide
 │   ├── multi-instance-setup-template.yaml # Generic configuration
@@ -49,20 +68,29 @@ claude-framework/
 │       ├── web-application.yaml          # Web app configuration
 │       ├── microservices.yaml           # Microservices configuration
 │       └── mobile-application.yaml      # Mobile app configuration
-└── .claude/agents/                        # Subagent configurations
-    ├── ai-engineer.md                     # AI/ML system design
-    ├── api-designer.md                    # REST/GraphQL APIs
-    ├── backend-designer.md               # System architecture
-    ├── code-reviewer.md                  # Security & quality audits
-    ├── database-admin.md                 # Database optimization
-    ├── deployment-engineer.md            # CI/CD & deployment
-    ├── electron-pro.md                   # Desktop applications
-    ├── jenny.md                          # Requirements validation
-    ├── karen.md                          # Reality checking
-    ├── multiagent-organizer.md          # Workflow orchestration
-    ├── task-completion-validator.md      # Feature verification
-    ├── ui-comprehensive-tester.md        # E2E testing
-    └── ultrathink-debugger.md           # Complex debugging
+├── .claude/                               # Claude Code configuration
+│   ├── agents/                           # Subagent configurations
+│   │   ├── ai-engineer.md
+│   │   ├── api-designer.md
+│   │   ├── backend-designer.md
+│   │   ├── code-reviewer.md
+│   │   ├── database-admin.md
+│   │   ├── deployment-engineer.md
+│   │   ├── electron-pro.md
+│   │   ├── jenny.md
+│   │   ├── karen.md
+│   │   ├── multiagent-organizer.md
+│   │   ├── task-completion-validator.md
+│   │   ├── ui-comprehensive-tester.md
+│   │   └── ultrathink-debugger.md
+│   ├── commands/                         # Slash commands
+│   │   ├── planning-checklist.json      # ⭐ NEW: Complexity analysis
+│   │   ├── planning-auto-invoke.json    # ⭐ NEW: Auto-workflow launch
+│   │   └── planning-audit.json          # ⭐ NEW: Compliance validation
+│   ├── hooks/                            # Development hooks
+│   └── settings.template.json            # Base settings template
+├── CLAUDE.template.md                    # ⭐ OPTIMIZED: Lean template (~350 lines)
+└── README.md                             # This file
 ```
 
 ## 🎯 Quick Start
@@ -308,8 +336,38 @@ This framework follows semantic versioning:
 
 MIT License - See LICENSE file for details
 
+## New Features (v2.0.0)
+
+### Documentation Optimization
+- **Lean CLAUDE.md**: Reduced from 10,000+ lines to ~350 lines
+- **MCP Query Optimization Guide**: Token-efficient query strategies
+- **Subagent Guide**: Complete 16-subagent reference with phase mappings
+- **Planning Enforcement**: Complexity-based workflow automation
+- **Planning Template**: 7-step format for complex tasks
+- **Performance Tracking**: SQLite benchmark system
+
+### Enhanced Development Tools
+- **Context Verification**: Canary phrase to verify CLAUDE.md loading
+- **Performance Budgets**: Automated enforcement (cold start <2s, p95 <200ms)
+- **Secrets Safety**: Clear policy for environment variables
+- **Planning Commands**: `/planning-checklist`, `/planning-auto-invoke`, `/planning-audit`
+- **Sequential Orchestration**: Fixed code-reviewer in Verification phase (not Debugging)
+
+### Framework Improvements
+- **Repository Cleanup Guide**: Automated cleanup protocols
+- **Git Workflow Guide**: Professional multi-agent git patterns
+- **Performance Tracking System**: SQLite schema and benchmark scripts
+- **Planning Template**: Structured 7-step planning format
+- **Reference Architecture**: Skeleton references vs project-specific implementations
+
 ## Related Documentation
 
+- [Template Variables Reference](docs/template-variables.md) - ⭐ NEW: Complete variable list for framework injection
+- [Framework Injection Guide](docs/framework-injection-guide.md) - ⭐ NEW: Step-by-step injection process
+- [MCP Query Optimization](docs/mcp-query-optimization.md) - ⭐ NEW: Context reduction strategies
+- [Subagent Guide](docs/subagent-guide.md) - ⭐ NEW: Complete subagent reference
+- [Planning Enforcement](docs/planning-enforcement.md) - ⭐ NEW: Workflow compliance
+- [Planning Template](docs/planning-template.md) - ⭐ NEW: 7-step planning format
 - [Multi-Agent Coordination](docs/multiagent.md) - Advanced parallel development patterns
 - [Development Workflow](docs/development-workflow.md) - TDD integration and task management
 - [API Design Patterns](docs/api-patterns.md) - Standardized API development guidelines
@@ -324,5 +382,5 @@ MIT License - See LICENSE file for details
 
 ---
 
-**Version 1.0.0** - Initial Claude Framework release
-**Last Updated**: 2025-09-26
+**Version 2.0.0** - Optimized Documentation & Performance Tracking
+**Last Updated**: 2025-01-15
