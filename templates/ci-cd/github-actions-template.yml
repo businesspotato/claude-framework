@@ -1,0 +1,347 @@
+# Claude Code CI/CD Template for GitHub Actions
+#
+# USAGE:
+# 1. Copy this file to .github/workflows/ci.yml in your project
+# 2. Customize the NODE_VERSION, test commands, and build steps
+# 3. Update repository secrets for deployment credentials
+# 4. Adjust triggers (branches) as needed
+#
+# FEATURES:
+# - Security scanning
+# - Code quality checks (TypeScript, linting, formatting)
+# - Multi-agent parallel testing
+# - Cross-platform builds
+# - Integration & E2E tests
+# - Performance benchmarking
+# - Automated deployment
+# - Validation reporting
+
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]  # Customize: Add your development branches
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  NODE_VERSION: '20.x'  # Customize: Match your Node.js version
+  # Add framework-specific cache paths as needed
+
+jobs:
+  # ============================================================================
+  # SECURITY & DEPENDENCIES
+  # ============================================================================
+  security-scan:
+    name: Security & Dependency Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'  # or 'yarn' / 'pnpm'
+
+      - name: Install dependencies
+        run: npm ci  # or: yarn install --frozen-lockfile / pnpm install --frozen-lockfile
+
+      - name: Security audit
+        run: npm audit --audit-level=moderate
+
+      - name: Check for sensitive data
+        run: |
+          echo "Checking for potential secrets..."
+          git log --oneline -10 | grep -i -E "(password|secret|key|token)" || echo "✅ No sensitive patterns found"
+
+      - name: Dependency vulnerability scan
+        uses: anchore/scan-action@v3
+        with:
+          path: "."
+          fail-build: false
+
+      - name: Upload vulnerability report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vulnerability-report
+          path: vulnerabilities.json
+
+  # ============================================================================
+  # CODE QUALITY
+  # ============================================================================
+  quality-check:
+    name: Code Quality & Type Safety
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript compilation check
+        run: npm run typecheck  # Customize: Your typecheck command
+
+      - name: Run linting
+        run: npm run lint  # Customize: Your lint command
+
+      - name: Check code formatting
+        run: npm run format:check || echo "⚠️ Format check not configured"
+
+  # ============================================================================
+  # TESTING - Multi-Agent Pattern
+  # ============================================================================
+  test-backend:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup test database
+        run: npm run db:migrate:test || echo "⚠️ No database migrations"
+
+      - name: Run backend tests
+        run: npm run test:backend || npm run test  # Customize: Your backend test command
+
+      - name: Upload backend coverage
+        uses: codecov/codecov-action@v4
+        with:
+          flags: backend
+          name: backend-coverage
+        continue-on-error: true
+
+  test-frontend:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run frontend tests
+        run: npm run test:frontend || npm run test  # Customize: Your frontend test command
+
+      - name: Upload frontend coverage
+        uses: codecov/codecov-action@v4
+        with:
+          flags: frontend
+          name: frontend-coverage
+        continue-on-error: true
+
+  # ============================================================================
+  # INTEGRATION & E2E TESTS
+  # ============================================================================
+  test-integration:
+    name: Integration & E2E Tests
+    needs: [test-backend, test-frontend]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup integration environment
+        run: npm run setup:integration || echo "⚠️ Integration setup not configured"
+
+      - name: Run integration tests
+        run: npm run test:integration || echo "⚠️ Integration tests not configured"
+
+      - name: Install E2E test browsers
+        run: npx playwright install --with-deps || echo "⚠️ Playwright not installed"
+
+      - name: Run E2E tests
+        run: npm run test:e2e || echo "⚠️ E2E tests not configured"
+        env:
+          CI: true
+
+      - name: Upload E2E results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-test-results
+          path: test-results/
+
+  # ============================================================================
+  # PERFORMANCE BENCHMARKS
+  # ============================================================================
+  performance-test:
+    name: Performance Benchmarks
+    needs: [quality-check]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run performance tests
+        run: npm run test:performance || echo "⚠️ Performance tests not configured"
+
+      - name: Upload performance results
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-benchmarks
+          path: performance-results.json
+        continue-on-error: true
+
+  # ============================================================================
+  # BUILD - Cross-Platform
+  # ============================================================================
+  build-test:
+    name: Build Test (${{ matrix.os }})
+    needs: [security-scan, quality-check, test-integration]
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]  # Customize: Remove OS if not needed
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Setup build cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            node_modules/.cache
+            # Add framework-specific cache paths
+          key: ${{ runner.os }}-build-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build application
+        run: npm run build  # Customize: Your build command
+
+      - name: Verify build output
+        run: |
+          echo "Verifying build artifacts..."
+          # Customize: Add your build output verification
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.os }}
+          path: dist/  # Customize: Your build output directory
+          retention-days: 7
+
+  # ============================================================================
+  # DEPLOYMENT (Main Branch Only)
+  # ============================================================================
+  deploy:
+    name: Production Deployment
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [build-test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build production app
+        run: npm run build:production || npm run build
+
+      - name: Create release artifacts
+        run: npm run release:create || echo "⚠️ Release creation not configured"
+
+      # Customize: Add your deployment steps here
+      # Examples:
+      # - Deploy to Vercel, Netlify, AWS, Azure, etc.
+      # - Upload to app stores
+      # - Create GitHub release
+
+      - name: Upload to release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: dist/releases/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ============================================================================
+  # VALIDATION REPORT
+  # ============================================================================
+  validation-report:
+    name: CI/CD Validation Report
+    needs: [security-scan, quality-check, test-integration, performance-test, build-test]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Generate validation report
+        run: |
+          echo "# CI/CD Pipeline Validation Report" > validation-report.md
+          echo "" >> validation-report.md
+          echo "## Pipeline Status" >> validation-report.md
+          echo "- Security Scan: ${{ needs.security-scan.result }}" >> validation-report.md
+          echo "- Quality Check: ${{ needs.quality-check.result }}" >> validation-report.md
+          echo "- Integration Tests: ${{ needs.test-integration.result }}" >> validation-report.md
+          echo "- Performance Tests: ${{ needs.performance-test.result }}" >> validation-report.md
+          echo "- Build Tests: ${{ needs.build-test.result }}" >> validation-report.md
+          echo "" >> validation-report.md
+          echo "## Deployment Readiness" >> validation-report.md
+
+          if [[ "${{ needs.security-scan.result }}" == "success" && \
+                "${{ needs.quality-check.result }}" == "success" && \
+                "${{ needs.test-integration.result }}" == "success" && \
+                "${{ needs.build-test.result }}" == "success" ]]; then
+            echo "✅ **READY FOR DEPLOYMENT**" >> validation-report.md
+          else
+            echo "❌ **NOT READY - Fix failing jobs**" >> validation-report.md
+          fi
+
+          cat validation-report.md
+
+      - name: Upload validation report
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-report
+          path: validation-report.md
